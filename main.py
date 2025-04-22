@@ -27,7 +27,7 @@ for _, row in benchmark_df.iterrows():
             }
             # Append the dictionary to the result list
             results.append(row_dict)
-            with open("results/gpt_results.json", "w") as json_file:
+            with open("results/pair_results.json", "a") as json_file:
                 json.dump(results, json_file, indent=4)
             break
         except json.JSONDecodeError as e:

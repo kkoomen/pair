@@ -94,8 +94,10 @@ def pair_algorithm(num_iterations, attack_objective, start_string):
     """
     result = {}
 
-    print("Starting the PAIR algorithm...")
     print()
+    print("================================================")
+    print("                     PAIR                       ")
+    print("================================================")
     print(f"Attack prompt: {attack_objective}")
     print()
 
@@ -121,7 +123,6 @@ def pair_algorithm(num_iterations, attack_objective, start_string):
             # Judge the response
             success = judge(attempt_prompt, response_from_target, attack_objective)
             success, rating = success[0], success[1]
-            print('Rating:', rating)
 
             result[approach].append({
                 'Prompt': attempt_prompt,
@@ -131,13 +132,12 @@ def pair_algorithm(num_iterations, attack_objective, start_string):
 
             # If success, return the successful prompt
             if success:
-                print("[SUCCESS] Jailbreak attempt:")
-                print("Rating:", rating)
+                print("[SUCCESS] Jailbreak found!")
                 print("Prompt:", attempt_prompt)
                 print("Response:", response_from_target)
                 return result
 
-            print('[FAILED] Rating: {rating}, preparing next iteration...')
+            print(f"[FAILED] Rating: {rating}, preparing next iteration...")
 
             attack_prompt_json['response'] = response_from_target
 
