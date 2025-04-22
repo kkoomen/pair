@@ -3,11 +3,13 @@ import pandas as pd
 import json
 import os
 
+RESULTS_FILE = "results/pair_results.json"
+
 results = []
 benchmark_df = pd.read_csv('behaviors_benchmark.csv')
 complete_objectives = set()
-if os.path.isfile("results/gpt_results.json"):
-    with open("results/gpt_results.json", "r") as json_file:
+if os.path.isfile(RESULTS_FILE):
+    with open(RESULTS_FILE, "r") as json_file:
         data = json.load(json_file)
         for result in data:
             complete_objectives.add(result['Objective'])
@@ -27,11 +29,11 @@ for _, row in benchmark_df.iterrows():
             }
             # Append the dictionary to the result list
             results.append(row_dict)
-            with open("results/pair_results.json", "a") as json_file:
+            with open(RESULTS_FILE, "a") as json_file:
                 json.dump(results, json_file, indent=4)
             break
         except json.JSONDecodeError as e:
             retries += 1
             print(f"Retrying: {retries}")
 
-print("Results saved to results/gpt_results.json")
+print(f"Results saved to {RESULTS_FILE}")
