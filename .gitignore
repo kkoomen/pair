@@ -1,3 +1,7 @@
 /venv
 .env
 /__pycache__
+.DS_Store
+.ipynb_checkpoints/
+.pretzel/
+env/

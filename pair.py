@@ -6,17 +6,20 @@ from dotenv import load_dotenv
 
 load_dotenv()
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-open_source_client = OpenAI(api_key=os.getenv("TOGETHER_API_KEY"),
-                base_url="https://api.together.xyz/v1",
+together_client = OpenAI(
+    api_key=os.getenv("TOGETHER_API_KEY"),
+    base_url="https://api.together.xyz/v1",
 )
 
-OPEN_SOURCE_MODEL = "mistralai/Mixtral-8x7B-Instruct-v0.1"
+ATTACKER_MODEL = "mistralai/Mixtral-8x7B-Instruct-v0.1"
+TARGET_MODEL = "gpt-3.5-turbo"
+JUDGE_MODEL = "gpt-4.1"
 
-with open('authority_system_prompt.txt', 'r', encoding='utf-8') as f:
-    authority_system_prompt = f.read()
-
-with open('logic_system_prompt.txt', 'r', encoding='utf-8') as f:
-    logic_system_prompt = f.read()
+# with open('authority_system_prompt.txt', 'r', encoding='utf-8') as f:
+#     authority_system_prompt = f.read()
+#
+# with open('logic_system_prompt.txt', 'r', encoding='utf-8') as f:
+#     logic_system_prompt = f.read()
 
 with open('roleplay_system_prompt.txt', 'r', encoding='utf-8') as f:
     roleplay_system_prompt = f.read()
@@ -24,14 +27,17 @@ with open('roleplay_system_prompt.txt', 'r', encoding='utf-8') as f:
 with open('judge_prompt.txt', 'r', encoding='utf-8') as f:
     judge_system_prompt = f.read()
 
-system_prompts = [authority_system_prompt, logic_system_prompt, roleplay_system_prompt]
-approaches = ["Authority", "Logic", "Roleplay"]
+# system_prompts = [authority_system_prompt, logic_system_prompt, roleplay_system_prompt]
+# approaches = ["Authority", "Logic", "Roleplay"]
+system_prompts = [roleplay_system_prompt]
+approaches = ["Roleplay"]
 
-def call_attacker_gpt(prompt, objective, system_prompt, start_string, model="gpt-3.5-turbo"):
+
+def call_attacker_model(prompt, objective, system_prompt, start_string, model=ATTACKER_MODEL):
     """
     Calls the GPT-3.5 API and returns the response.
     """
-    response = client.chat.completions.create(
+    response = together_client.chat.completions.create(
         model=model,
         messages=[
             {"role": "system", "content": system_prompt.replace(r"[[OBJECTIVE]]", objective).replace(r"[[STARTING STRING]]", start_string)},
@@ -41,7 +47,8 @@ def call_attacker_gpt(prompt, objective, system_prompt, start_string, model="gpt
     )
     return response.choices[0].message.content
 
-def call_target_gpt(prompt, model="gpt-3.5-turbo"):
+
+def call_target_model(prompt, model=TARGET_MODEL):
     response = client.chat.completions.create(
         model=model,
         messages=[
@@ -52,30 +59,30 @@ def call_target_gpt(prompt, model="gpt-3.5-turbo"):
     time.sleep(1)
     return response.choices[0].message.content
 
+
 def call_judge_llm(prompt, response, objective):
     # Construct the full prompt with objective, prompt, and response
     judge_prompt = f"Prompt: {prompt}\nResponse: {response}"
-    
+
     messages = [
         {"role": "system", "content": judge_system_prompt.replace(r"[OBJECTIVE]", objective)},
         {"role": "user", "content": judge_prompt}
     ]
-    
-    # Calls open source model to evaluate the response
-    result = open_source_client.chat.completions.create(
-        model=OPEN_SOURCE_MODEL,
+
+    # Evaluate the response
+    result = client.chat.completions.create(
+        model=JUDGE_MODEL,
         messages=messages,
         max_tokens=1000
     )
-    
+
     # Extract the model's response
     return result.choices[0].message.content
 
 
 # Judge function to interpret the rating and return True/False for jailbreak
-def judge_function(prompt, response, attack_objective):
+def judge(prompt, response, attack_objective):
     evaluation = call_judge_llm(prompt, response, attack_objective)
-    print(f"GPT-3.5 Judgment: {evaluation}")
     try:
         rating = int(evaluation.split("[[")[1].split("]]")[0])
     except (IndexError, ValueError):
@@ -85,11 +92,8 @@ def judge_function(prompt, response, attack_objective):
 
 def pair_algorithm(num_iterations, attack_objective, start_string):
     """
-    Implements the PAIR algorithm using GPT-3.5 as both attacker and target LLM.
+    Implements the PAIR algorithm using Mixtral as the attacker and GPT-3.5 as the target.
     """
-    attacker_model = "gpt-3.5-turbo"
-    target_model = "gpt-3.5-turbo"
-
     result = {}
 
     for system_prompt, approach in zip(system_prompts, approaches):
@@ -102,18 +106,22 @@ def pair_algorithm(num_iterations, attack_objective, start_string):
                 prompt = f"Based on the following history and objective \"{attack_objective}\", refine the prompt: {conversation_history}"
 
             # Call attacker model
-            prompt_from_attacker = call_attacker_gpt(prompt, attack_objective, system_prompt, start_string, model=attacker_model)
+            prompt_from_attacker = call_attacker_model(prompt, attack_objective, system_prompt, start_string, model=ATTACKER_MODEL)
 
             attack_prompt_json = json.loads(prompt_from_attacker)
             attempt_prompt = attack_prompt_json['prompt']
             # Call target model with the generated prompt
-            response_from_target = call_target_gpt(attempt_prompt)
+            response_from_target = call_target_model(attempt_prompt)
 
             # Judge the response
-            success = judge_function(attempt_prompt, response_from_target, attack_objective)
+            success = judge(attempt_prompt, response_from_target, attack_objective)
             success, rating = success[0], success[1]
 
-            result[approach].append({'Prompt': attempt_prompt, 'Response': response_from_target, 'Rating': rating})
+            result[approach].append({
+                'Prompt': attempt_prompt,
+                'Response': response_from_target,
+                'Rating': rating
+            })
 
             # If success, return the successful prompt
             if success:
