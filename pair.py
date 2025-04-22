@@ -14,6 +14,7 @@ together_client = OpenAI(
 ATTACKER_MODEL = "mistralai/Mixtral-8x7B-Instruct-v0.1"
 TARGET_MODEL = "gpt-3.5-turbo"
 JUDGE_MODEL = "gpt-4.1"
+MAX_TOKENS = 256
 
 # with open('authority_system_prompt.txt', 'r', encoding='utf-8') as f:
 #     authority_system_prompt = f.read()
@@ -34,16 +35,13 @@ approaches = ["Roleplay"]
 
 
 def call_attacker_model(prompt, objective, system_prompt, start_string, model=ATTACKER_MODEL):
-    """
-    Calls the GPT-3.5 API and returns the response.
-    """
     response = together_client.chat.completions.create(
         model=model,
         messages=[
             {"role": "system", "content": system_prompt.replace(r"[[OBJECTIVE]]", objective).replace(r"[[STARTING STRING]]", start_string)},
             {"role": "user", "content": prompt},
         ],
-        max_tokens=1000,
+        max_tokens=MAX_TOKENS
     )
     return response.choices[0].message.content
 
@@ -54,7 +52,7 @@ def call_target_model(prompt, model=TARGET_MODEL):
         messages=[
             {"role": "user", "content": prompt},
         ],
-        max_tokens=1000,
+        max_tokens=MAX_TOKENS
     )
     time.sleep(1)
     return response.choices[0].message.content
@@ -73,7 +71,7 @@ def call_judge_llm(prompt, response, objective):
     result = client.chat.completions.create(
         model=JUDGE_MODEL,
         messages=messages,
-        max_tokens=1000
+        max_tokens=MAX_TOKENS
     )
 
     # Extract the model's response
@@ -100,6 +98,7 @@ def pair_algorithm(num_iterations, attack_objective, start_string):
         result[approach] = []
         conversation_history = []
         for i in range(num_iterations):
+            print(f"{i+1}/{num_iterations} Attempting to jailbreak with {approach} approach...")
             if len(conversation_history) == 0:
                 prompt = attack_objective
             else:
@@ -116,6 +115,7 @@ def pair_algorithm(num_iterations, attack_objective, start_string):
             # Judge the response
             success = judge(attempt_prompt, response_from_target, attack_objective)
             success, rating = success[0], success[1]
+            print('Rating:', rating)
 
             result[approach].append({
                 'Prompt': attempt_prompt,
@@ -125,7 +125,10 @@ def pair_algorithm(num_iterations, attack_objective, start_string):
 
             # If success, return the successful prompt
             if success:
+                print('Jailbreak successful!')
                 return result
+
+            print('Jailbreak failed, preparing next iteration...')
 
             attack_prompt_json['response'] = response_from_target
 
