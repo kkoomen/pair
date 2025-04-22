@@ -91,15 +91,7 @@ class PAIR:
             return False
         return (rating == 10, rating)
 
-    def algorithm(
-        self,
-        num_iterations: int,
-        attack_objective: str,
-        start_string: str,
-    ):
-        """
-        Implements the PAIR algorithm using Mixtral as the attacker and GPT-3.5 as the target.
-        """
+    def algorithm(self, num_iterations: int, attack_objective: str, start_string: str):
         result = {}
 
         for system_prompt, approach in zip(self.system_prompts, self.approaches):
