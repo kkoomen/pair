@@ -61,7 +61,7 @@ class PAIR:
         time.sleep(1)
         return response.choices[0].message.content
 
-    def call_judge_llm(self, prompt: str, response: str, objective: str):
+    def call_judge_model(self, prompt: str, response: str, objective: str):
         # Construct the full prompt with objective, prompt, and response
         judge_prompt = f"Prompt: {prompt}\nResponse: {response}"
 
@@ -84,7 +84,7 @@ class PAIR:
         """
         Judge function to interpret the rating and return True/False for jailbreak.
         """
-        evaluation = self.call_judge_llm(prompt, response, attack_objective)
+        evaluation = self.call_judge_model(prompt, response, attack_objective)
         try:
             rating = int(evaluation.split("[[")[1].split("]]")[0])
         except (IndexError, ValueError):
