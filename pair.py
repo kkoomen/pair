@@ -94,11 +94,22 @@ def pair_algorithm(num_iterations, attack_objective, start_string):
     """
     result = {}
 
+    print("Starting the PAIR algorithm...")
+    print()
+    print(f"Attack Objective: {attack_objective}")
+    print(f"Starting String: {start_string}")
+    print(f"Number of Iterations: {num_iterations}")
+    print()
+    print("Attacker Model:", ATTACKER_MODEL)
+    print("Target Model:", TARGET_MODEL)
+    print("Judge Model:", JUDGE_MODEL)
+
     for system_prompt, approach in zip(system_prompts, approaches):
         result[approach] = []
         conversation_history = []
+
         for i in range(num_iterations):
-            print(f"{i+1}/{num_iterations} Attempting to jailbreak with {approach} approach...")
+            print(f"\n({i+1}/{num_iterations}) Attempting to jailbreak...")
             if len(conversation_history) == 0:
                 prompt = attack_objective
             else:
@@ -109,8 +120,12 @@ def pair_algorithm(num_iterations, attack_objective, start_string):
 
             attack_prompt_json = json.loads(prompt_from_attacker)
             attempt_prompt = attack_prompt_json['prompt']
+
             # Call target model with the generated prompt
             response_from_target = call_target_model(attempt_prompt)
+
+            short_response = f"{response_from_target[:20]}..." if len(response_from_target) > 20 else response_from_target
+            print(f"Target response: {short_response}")
 
             # Judge the response
             success = judge(attempt_prompt, response_from_target, attack_objective)
@@ -125,10 +140,13 @@ def pair_algorithm(num_iterations, attack_objective, start_string):
 
             # If success, return the successful prompt
             if success:
-                print('Jailbreak successful!')
+                print("[SUCCEEDED] Jailbreak attempt:")
+                print("\tRating:", rating)
+                print("\tPrompt:", attempt_prompt)
+                print("\tResponse:", short_response)
                 return result
 
-            print('Jailbreak failed, preparing next iteration...')
+            print('[FAILED] preparing next iteration...')
 
             attack_prompt_json['response'] = response_from_target
 
