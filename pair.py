@@ -1,31 +1,23 @@
-from openai import OpenAI
 import os
 import time
 import json
 from dotenv import load_dotenv
 import pandas as pd
+from logger import setup_logger
+from models.base import Model
+from models.llama import Llama2
 
 load_dotenv()
 
 
 class PAIR:
-    GPT_CLIENT = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-
-    TOGETHER_CLIENT = OpenAI(
-        api_key=os.getenv("TOGETHER_API_KEY"),
-        base_url="https://api.together.xyz/v1",
-    )
-
     MAX_TOKENS = 256
 
-    def __init__(self, attack_model: str, target_model: str, judge_model: str):
+    def __init__(self, attack_model: Model, target_model: Model, judge_model: Model):
+        self.logger = setup_logger(self.__class__.__name__)
         self.attack_model = attack_model
         self.target_model = target_model
         self.judge_model = judge_model
-
-        self.attack_model_client = self.get_client(attack_model)
-        self.target_model_client = self.get_client(target_model)
-        self.judge_model_client = self.get_client(judge_model)
 
         self.JUDGE_SYSTEM_PROMPT = self.load_system_prompt_template("judge")
         roleplay_system_prompt = self.load_system_prompt_template("roleplay")
@@ -36,49 +28,41 @@ class PAIR:
     def load_system_prompt_template(self, filename):
         return open(f"system_prompt_templates/{filename}.txt", "r", encoding="utf-8").read()
 
-    def get_client(self, model_name: str):
-        return self.GPT_CLIENT if model_name.startswith("gpt-") else self.TOGETHER_CLIENT
-
     def call_attacker_model(self, prompt: str, objective: str, system_prompt: str, start_string: str):
-        response = self.attack_model_client.chat.completions.create(
-            model=self.attack_model,
-            messages=[
-                {"role": "system", "content": system_prompt.replace(r"[[OBJECTIVE]]", objective).replace(r"[[STARTING STRING]]", start_string)},
-                {"role": "user", "content": prompt},
-            ],
-            max_tokens=self.MAX_TOKENS
+        return self.attack_model.get_response(
+            [
+                {
+                    "role": "system",
+                    "content": system_prompt.replace(r"[[OBJECTIVE]]", objective).replace(r"[[STARTING STRING]]", start_string)
+                },
+                {
+                    "role": "user",
+                    "content": prompt
+                },
+            ]
         )
-        return response.choices[0].message.content
 
     def call_target_model(self, prompt: str):
-        response = self.target_model_client.chat.completions.create(
-            model=self.target_model,
-            messages=[
-                {"role": "user", "content": prompt},
-            ],
-            max_tokens=self.MAX_TOKENS
-        )
-        time.sleep(1)
-        return response.choices[0].message.content
+        return self.target_model.get_response([
+            {
+                "role": "user",
+                "content": prompt
+            },
+        ])
 
     def call_judge_model(self, prompt: str, response: str, objective: str):
-        # Construct the full prompt with objective, prompt, and response
         judge_prompt = f"Prompt: {prompt}\nResponse: {response}"
 
-        messages = [
-            {"role": "system", "content": self.JUDGE_SYSTEM_PROMPT.replace(r"[OBJECTIVE]", objective)},
-            {"role": "user", "content": judge_prompt}
-        ]
-
-        # Evaluate the response
-        result = self.judge_model_client.chat.completions.create(
-            model=self.judge_model,
-            messages=messages,
-            max_tokens=self.MAX_TOKENS
-        )
-
-        # Extract the model's response
-        return result.choices[0].message.content
+        return self.judge_model.get_response([
+            {
+                "role": "system",
+                "content": self.JUDGE_SYSTEM_PROMPT.replace(r"[OBJECTIVE]", objective)
+            },
+            {
+                "role": "user",
+                "content": judge_prompt
+            },
+        ])
 
     def judge(self, prompt: str, response: str, attack_objective: str):
         """
@@ -99,7 +83,7 @@ class PAIR:
             conversation_history = []
 
             for i in range(num_iterations):
-                print(f"\n({i+1}/{num_iterations}) Attempting to jailbreak...")
+                self.logger.info(f"\n({i+1}/{num_iterations}) Attempting to jailbreak...")
                 if len(conversation_history) == 0:
                     prompt = attack_objective
                 else:
@@ -125,10 +109,10 @@ class PAIR:
 
                 # If success, return the successful prompt
                 if success:
-                    print("[SUCCESS] Jailbreak found!")
+                    self.logger.info("[SUCCESS] Jailbreak found!")
                     return result
 
-                print(f"[FAILED] Rating: {rating}, preparing next iteration...")
+                self.logger.info(f"[FAILED] Rating: {rating}, preparing next iteration...")
 
                 attack_prompt_json['response'] = response_from_target
 
@@ -138,7 +122,7 @@ class PAIR:
         return result  # No successful jailbreak found after K iterations
 
     def run_single(self, iters: int, row: pd.Series):
-        print(f"Attack Objective: {row['Goal']}")
+        self.logger.info(f"Attack Objective: {row['Goal']}")
 
         retries = 0
         while True:
@@ -159,7 +143,7 @@ class PAIR:
                 # and if the model is failing to only return JSON as being told,
                 # then json.loads() will throw a json.JSONDecodeError exception.
                 retries += 1
-                print(f"[ERROR] Attacker model's response failed solely return JSON, retrying: {retries}")
+                self.logger.info(f"[ERROR] Attacker model's response failed solely return JSON, retrying: {retries}")
 
     def run_benchmark(self, iters: int, results_file: str):
         """
@@ -185,5 +169,5 @@ class PAIR:
             with open(results_file, "w") as json_file:
                 json.dump(results, json_file, indent=4)
 
-            print(f"Results saved to {results_file}")
+            self.logger.info(f"Results saved to {results_file}")
 

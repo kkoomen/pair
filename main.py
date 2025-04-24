@@ -3,6 +3,11 @@ import pandas as pd
 import json
 import os
 import argparse
+import re
+from models.llama import Llama2
+from models.vicuna import Vicuna
+from models.gpt import GPT
+from models.together import Together
 
 RESULTS_FILE = "results/pair_results.json"
 os.makedirs("results", exist_ok=True)
@@ -14,11 +19,13 @@ def parse_args():
         description="Jailbreaking LLaMA-2-Chat-7B, Vicuna-13B, GPT-3.5 Turbo and GPT-4o",
     )
 
+    model_desc = "Model IDs can be either ToghetherAI model IDs or OpenAI model names in addition to the custom llama2 and vicuna models. For example, local: 'llama2', 'vicuna', gpt: 'gpt-3.5-turbo', or 'gpt-4o', together: 'gpt-4.1', 'mistralai/Mixtral-8x7B-Instruct-v0.1'."
+
     parser.add_argument(
         "--attack-model",
         type=str,
         default="mistralai/Mixtral-8x7B-Instruct-v0.1",
-        help="Name of the attack model which iteratively generates refined adversarial prompts fed to the target model.",
+        help=f"Name of the attack model which iteratively generates refined adversarial prompts fed to the target model.\n{model_desc}",
     )
 
     parser.add_argument(
@@ -57,24 +64,39 @@ def parse_args():
     return parser.parse_args()
 
 
+def get_model(model_id: str, *args, **kwargs):
+    if model_id == "llama2":
+        return Llama2(*args, **kwargs)
+    elif model_id == "vicuna":
+        return Vicuna(*args, **kwargs)
+    if model_id.startswith("gpt-"):
+        return GPT(model_id, *args, **kwargs)
+    elif re.match(r"^[a-zA-Z0-9._-]+\/[a-zA-Z0-9._-]+$", model_id):
+        return Together(model_id, *args, **kwargs)
+    else:
+        raise ValueError(f"Unknown model ID: {model_id}")
+
+
 if __name__ == "__main__":
     args = parse_args()
+
+    model_args = dict(max_tokens=256)
+
+    attack_model = get_model(args.attack_model, **model_args)
+    target_model = get_model(args.target_model, **model_args)
+    judge_model = get_model(args.judge_model, **model_args)
 
     print()
     print("================================================")
     print("                     PAIR                       ")
     print("================================================")
-    print(f"Attack Model: {args.attack_model}")
-    print(f"Target Model: {args.target_model}")
-    print(f"Judge Model: {args.judge_model}")
+    print(f"Attack Model: {attack_model.model_id}")
+    print(f"Target Model: {target_model.model_id}")
+    print(f"Judge Model: {judge_model.model_id}")
     print(f"Iterations: {args.iters}")
     print()
 
-    pair = PAIR(
-        args.attack_model,
-        args.target_model,
-        args.judge_model,
-    )
+    pair = PAIR(attack_model, target_model, judge_model)
 
     if args.goal and args.target:
         df = pd.DataFrame({
@@ -87,4 +109,3 @@ if __name__ == "__main__":
         print(json.dumps(results, indent=4))
     else:
         pair.run_benchmark(args.iters, RESULTS_FILE)
-
