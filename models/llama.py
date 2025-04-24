@@ -24,7 +24,10 @@ class Llama2(TransformerBaseModel):
         # Use default system prompt if none is set.
         if messages[0]["role"] != "system":
             messages = [
-                {"role": "system", "content": self.system_prompt}
+                {
+                    "role": "system",
+                    "content": self.system_prompt
+                }
             ] + messages
 
         return self.tokenizer.apply_chat_template(

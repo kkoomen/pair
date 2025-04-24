@@ -3,9 +3,9 @@ from abc import ABC, abstractmethod
 
 class Model(ABC):
 
-    def __init__(self, max_tokens: int):
-        print('max_tokens', max_tokens)
+    def __init__(self, max_tokens: int, device: str):
         self.max_tokens = max_tokens
+        self.device = device
 
     @property
     def name(self):

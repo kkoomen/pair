@@ -9,57 +9,34 @@ class TransformerBaseModel(Model):
     model_id: str
     system_prompt: str
 
-    def __init__(self):
+    tokenizer: AutoTokenizer
+    model: AutoModelForCausalLM
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self.logger = setup_logger(self.__class__.__name__)
-        self.load_model()
+        self.model = self.load_model()
 
     def load_model(self):
         self.tokenizer = AutoTokenizer.from_pretrained(self.model_id)
 
-        bnb_config = BitsAndBytesConfig(
+        quant_config = BitsAndBytesConfig(
             load_in_4bit=True,
-            bnb_4bit_use_double_quant=True,
             bnb_4bit_compute_dtype=torch.float16,
+            bnb_4bit_use_double_quant=True,
             bnb_4bit_quant_type="nf4"
         )
 
-        self.model = AutoModelForCausalLM.from_pretrained(
+        model = AutoModelForCausalLM.from_pretrained(
             self.model_id,
-            quantization_config=bnb_config,
-            device_map="auto",
-            torch_dtype=torch.float16
+            quantization_config=quant_config,
+            device_map="auto"
         )
 
-    def get_streamer(self, prompt):
-        inputs = self.tokenizer(prompt, return_tensors="pt").to(self.model.device)
-
-        streamer = TextIteratorStreamer(
-            self.tokenizer,
-            skip_prompt=True,
-            skip_special_tokens=True
-        )
-
-        # Start generation in a thread
-        generation_kwargs = dict(
-            **inputs,
-            streamer=streamer,
-            max_new_tokens=self.max_tokens,
-            do_sample=True,
-            temperature=0.7,
-            top_p=0.9
-        )
-        thread = Thread(target=self.model.generate, kwargs=generation_kwargs)
-        thread.start()
-
-        return streamer
-
-    def get_stream_output(self, streamer):
-        response = ""
-        for token in streamer:
-            response += token
-        return response
+        return model
 
     def get_response(self, messages: list[object]):
         prompt = self.get_chat_template(messages)
-        streamer = self.get_streamer(prompt)
-        return self.get_stream_output(streamer)
+        inputs = self.tokenizer(prompt, return_tensors="pt").to(self.device)
+        outputs = self.model.generate(**inputs, max_new_tokens=self.max_tokens)
+        return self.tokenizer.batch_decode(outputs, skip_special_tokens=True)
