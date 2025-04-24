@@ -15,11 +15,13 @@ class TransformerBaseModel(Model):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.logger = setup_logger(self.__class__.__name__)
+        self.tokenizer = self.load_tokenizer()
         self.model = self.load_model()
 
-    def load_model(self):
-        self.tokenizer = AutoTokenizer.from_pretrained(self.model_id)
+    def load_tokenizer(self):
+        return AutoTokenizer.from_pretrained(self.model_id)
 
+    def load_model(self):
         quant_config = BitsAndBytesConfig(
             load_in_4bit=True,
             bnb_4bit_compute_dtype=torch.float16,
@@ -39,4 +41,5 @@ class TransformerBaseModel(Model):
         prompt = self.get_chat_template(messages)
         inputs = self.tokenizer(prompt, return_tensors="pt").to(self.device)
         outputs = self.model.generate(**inputs, max_new_tokens=self.max_tokens)
-        return self.tokenizer.batch_decode(outputs, skip_special_tokens=True)
+        response = self.tokenizer.batch_decode(outputs, skip_special_tokens=True)
+        return ''.join(response)

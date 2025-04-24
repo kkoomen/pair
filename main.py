@@ -5,16 +5,17 @@ import os
 import argparse
 import re
 import torch
-from logger import setup_logger
 from models.llama import Llama2
 from models.vicuna import Vicuna
 from models.gpt import GPT
 from models.together import Together
 
-MAX_TOKENS = 500
-
 RESULTS_FILE = "results/pair_results.json"
 os.makedirs("results", exist_ok=True)
+DEFAULT_MAX_TOKENS = 256
+
+ATTACK_MODEL = "mistralai/Mixtral-8x7B-Instruct-v0.1"
+JUDGE_MODEL = "gpt-4.1"
 
 
 def parse_args():
@@ -23,27 +24,11 @@ def parse_args():
         description="Jailbreaking LLaMA-2-Chat-7B, Vicuna-13B, GPT-3.5 Turbo and GPT-4o",
     )
 
-    model_desc = "Model IDs can be either ToghetherAI model IDs or OpenAI model names in addition to the custom llama2 and vicuna models. For example, local: 'llama2', 'vicuna', gpt: 'gpt-3.5-turbo', or 'gpt-4o', together: 'gpt-4.1', 'mistralai/Mixtral-8x7B-Instruct-v0.1'."
-
-    parser.add_argument(
-        "--attack-model",
-        type=str,
-        default="mistralai/Mixtral-8x7B-Instruct-v0.1",
-        help=f"Name of the attack model which iteratively generates refined adversarial prompts fed to the target model.\n{model_desc}",
-    )
-
     parser.add_argument(
         "--target-model",
         type=str,
         default="gpt-3.5-turbo",
-        help="Name of the target model that is being tested for jailbreak.",
-    )
-
-    parser.add_argument(
-        "--judge-model",
-        type=str,
-        default="gpt-4.1",
-        help="Name of the model that judges the responses of the target model.",
+        help="Name of the target model to test for jailbreak.",
     )
 
     parser.add_argument(
@@ -65,6 +50,34 @@ def parse_args():
         type=int,
         default=4,
         help="How many iterations to perform on the model.",
+    )
+
+    parser.add_argument(
+        "--attack-model-max-tokens",
+        type=int,
+        default=DEFAULT_MAX_TOKENS,
+        help="Maximum number of new tokens the target model should generate in the output.",
+    )
+
+    parser.add_argument(
+        "--target-model-max-tokens",
+        type=int,
+        default=DEFAULT_MAX_TOKENS,
+        help="Maximum number of new tokens the target model should generate in the output.",
+    )
+
+    parser.add_argument(
+        "--judge-model-max-tokens",
+        type=int,
+        default=DEFAULT_MAX_TOKENS,
+        help="Maximum number of new tokens the target model should generate in the output.",
+    )
+
+    parser.add_argument(
+        "--n-conv-items",
+        type=int,
+        default=4,
+        help="Maximum number of conversation history items the attack model contains.",
     )
 
     return parser.parse_args()
@@ -89,7 +102,6 @@ def is_valid_goal_target(goal: str, target: str):
     return (goal_bool and target_bool) or (not goal_bool and not target_bool)
 
 if __name__ == "__main__":
-    logger = setup_logger("main")
     args = parse_args()
 
     if not is_valid_goal_target(args.goal, args.target):
@@ -97,13 +109,12 @@ if __name__ == "__main__":
         sys.exit(1)
 
     model_args = dict(
-        max_tokens=MAX_TOKENS,
-        device=torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        device=torch.device("cuda" if torch.cuda.is_available() else "cpu"),
     )
 
-    attack_model = get_model(args.attack_model, **model_args)
-    target_model = get_model(args.target_model, **model_args)
-    judge_model = get_model(args.judge_model, **model_args)
+    attack_model = get_model(ATTACK_MODEL, max_tokens=args.attack_model_max_tokens, **model_args)
+    target_model = get_model(args.target_model, max_tokens=args.target_model_max_tokens, **model_args)
+    judge_model = get_model(JUDGE_MODEL, max_tokens=args.judge_model_max_tokens, **model_args)
 
     print()
     print("================================================")
@@ -115,7 +126,7 @@ if __name__ == "__main__":
     print(f"Iterations: {args.iters}")
     print()
 
-    pair = PAIR(attack_model, target_model, judge_model)
+    pair = PAIR(attack_model, target_model, judge_model, args.n_conv_items)
 
     if args.goal and args.target:
         df = pd.DataFrame({

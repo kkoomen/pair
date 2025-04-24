@@ -11,13 +11,14 @@ load_dotenv()
 
 
 class PAIR:
-    MAX_TOKENS = 256
+    MAX_RETRIES = 5
 
-    def __init__(self, attack_model: Model, target_model: Model, judge_model: Model):
+    def __init__(self, attack_model: Model, target_model: Model, judge_model: Model, n_conv_items: int):
         self.logger = setup_logger(self.__class__.__name__)
         self.attack_model = attack_model
         self.target_model = target_model
         self.judge_model = judge_model
+        self.n_conv_items = n_conv_items
 
         self.JUDGE_SYSTEM_PROMPT = self.load_system_prompt_template("judge")
         roleplay_system_prompt = self.load_system_prompt_template("roleplay")
@@ -29,18 +30,16 @@ class PAIR:
         return open(f"system_prompt_templates/{filename}.txt", "r", encoding="utf-8").read()
 
     def call_attacker_model(self, prompt: str, objective: str, system_prompt: str, start_string: str):
-        return self.attack_model.get_response(
-            [
-                {
-                    "role": "system",
-                    "content": system_prompt.replace(r"[[OBJECTIVE]]", objective).replace(r"[[STARTING STRING]]", start_string)
-                },
-                {
-                    "role": "user",
-                    "content": prompt
-                },
-            ]
-        )
+        return self.attack_model.get_response([
+            {
+                "role": "system",
+                "content": system_prompt.replace(r"[[OBJECTIVE]]", objective).replace(r"[[STARTING STRING]]", start_string)
+            },
+            {
+                "role": "user",
+                "content": prompt
+            },
+        ])
 
     def call_target_model(self, prompt: str):
         return self.target_model.get_response([
@@ -98,10 +97,13 @@ class PAIR:
                         break
                     except json.JSONDecodeError as e:
                         retries += 1
-                        self.logger.info(f"Attacker model's response failed solely return JSON, retrying: {retries}")
+                        if retries > self.MAX_RETRIES:
+                            self.logger.info("Retried {retries} times, conversation history might be too large, try modifying the max-tokens CLI flags for some models")
+                        else:
+                            self.logger.info(f"Attacker model's response failed solely return JSON, retrying: {retries}")
 
                 # Call target model with the generated prompt
-                attempt_prompt = attack_prompt_json['prompt']
+                attempt_prompt = attack_prompt_json["prompt"]
                 response_from_target = self.call_target_model(attempt_prompt)
 
                 # Judge the response
@@ -109,7 +111,7 @@ class PAIR:
                 success, rating = success[0], success[1]
 
                 result[approach].append({
-                    'Prompt': attempt_prompt,
+                    "Prompt": attempt_prompt,
                     'Response': response_from_target,
                     'Rating': rating
                 })
@@ -121,10 +123,11 @@ class PAIR:
 
                 self.logger.info(f"[FAILED] Rating: {rating}, preparing next iteration...")
 
-                attack_prompt_json['response'] = response_from_target
+                attack_prompt_json["response"] = response_from_target
 
                 # Update conversation history
                 conversation_history.append(attack_prompt_json)
+                conversation_history = conversation_history[-self.n_conv_items:]
 
         return result  # No successful jailbreak found after K iterations
 
