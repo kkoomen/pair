@@ -14,8 +14,8 @@ from models.together import Together
 from helpers import load_system_prompt_template
 import sys
 
-RESULTS_FILE = "results/pair_results.json"
 os.makedirs("results", exist_ok=True)
+DEFAULT_RESULTS_FILE = "results/pair_results.json"
 DEFAULT_MAX_TOKENS = 256
 
 # APPROACHES = ["Roleplay"]
@@ -126,6 +126,13 @@ def parse_args():
         help="Number of workers to use for the benchmark. NOTE: May run into rate limits when set too high.",
     )
 
+    parser.add_argument(
+        "--benchmark-output-file",
+        type=str,
+        default=DEFAULT_RESULTS_FILE,
+        help="Specify the benchmark output file.",
+    )
+
     return parser.parse_args()
 
 
@@ -195,4 +202,8 @@ if __name__ == "__main__":
         results = pair.run_single(args.iters, row)
         print(json.dumps(results, indent=4))
     else:
-        pair.run_benchmark(args.iters, args.benchmark_workers, RESULTS_FILE)
+        pair.run_benchmark(
+            args.iters,
+            args.benchmark_workers,
+            args.benchmark_output_file
+        )
