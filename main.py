@@ -119,6 +119,13 @@ def parse_args():
         help="Maximum number of conversation history items the attack model contains.",
     )
 
+    parser.add_argument(
+        "--benchmark-workers",
+        type=int,
+        default=5,
+        help="Number of workers to use for the benchmark. NOTE: May run into rate limits when set too high.",
+    )
+
     return parser.parse_args()
 
 
@@ -188,4 +195,4 @@ if __name__ == "__main__":
         results = pair.run_single(args.iters, row)
         print(json.dumps(results, indent=4))
     else:
-        pair.run_benchmark(args.iters, RESULTS_FILE)
+        pair.run_benchmark(args.iters, args.benchmark_workers, RESULTS_FILE)

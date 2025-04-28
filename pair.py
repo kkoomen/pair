@@ -162,7 +162,7 @@ class PAIR:
             "Output": output
         }
 
-    def run_benchmark(self, iters: int, results_file: str):
+    def run_benchmark(self, iters: int, max_workers: int, results_file: str):
         """
         Run the jailbreak on all behaviors in the benchmark dataset, up to 10 concurrently.
         """
@@ -185,7 +185,7 @@ class PAIR:
 
         completed = 0
 
-        with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
             futures = {executor.submit(self.run_single, iters, row, True): row for row in rows_to_run}
 
             for future in concurrent.futures.as_completed(futures):
