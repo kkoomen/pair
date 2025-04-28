@@ -1,7 +1,6 @@
 from openai import OpenAI
 import os
 from models.base import Model
-import re
 
 
 class GPT(Model):
@@ -21,6 +20,8 @@ class GPT(Model):
         response = self.client.chat.completions.create(
             model=self.model_id,
             messages=messages,
-            max_tokens=self.max_tokens
+            max_tokens=self.max_tokens,
+            temperature=self.temperature,
+            top_p=self.top_p,
         )
         return response.choices[0].message.content

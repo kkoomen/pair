@@ -3,9 +3,11 @@ from abc import ABC, abstractmethod
 
 class Model(ABC):
 
-    def __init__(self, max_tokens: int, device: str):
+    def __init__(self, max_tokens: int, device: str, temperature: float, top_p: float):
         self.max_tokens = max_tokens
         self.device = device
+        self.temperature = temperature
+        self.top_p = top_p
 
     @property
     def name(self):

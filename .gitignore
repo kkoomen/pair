@@ -1,6 +1,10 @@
 # Created by https://www.toptal.com/developers/gitignore/api/macos,python,unix,linux,vim
 # Edit at https://www.toptal.com/developers/gitignore?templates=macos,python,unix,linux,vim
 
+# Project-specific
+/results
+.pretzel
+
 ### Linux ###
 *~
 

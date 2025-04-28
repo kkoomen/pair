@@ -40,6 +40,12 @@ class TransformerBaseModel(Model):
     def get_response(self, messages: list[object]):
         prompt = self.get_chat_template(messages)
         inputs = self.tokenizer(prompt, return_tensors="pt").to(self.device)
-        outputs = self.model.generate(**inputs, max_new_tokens=self.max_tokens)
+        outputs = self.model.generate(
+            **inputs,
+            max_new_tokens=self.max_tokens,
+            do_sample=True,
+            temperature=self.temperature,
+            top_p=self.top_p,
+        )
         response = self.tokenizer.batch_decode(outputs, skip_special_tokens=True)
         return ''.join(response)

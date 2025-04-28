@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 from pair import PAIR
 import pandas as pd
 import json
@@ -9,26 +11,63 @@ from models.llama import Llama2
 from models.vicuna import Vicuna
 from models.gpt import GPT
 from models.together import Together
+from helpers import load_system_prompt_template
+import sys
 
 RESULTS_FILE = "results/pair_results.json"
 os.makedirs("results", exist_ok=True)
 DEFAULT_MAX_TOKENS = 256
 
-ATTACK_MODEL = "mistralai/Mixtral-8x7B-Instruct-v0.1"
-JUDGE_MODEL = "gpt-4.1"
+# APPROACHES = ["Roleplay"]
+# SYSTEM_PROMPTS = [load_system_prompt_template("roleplay")]
+# JUDGE_SYSTEM_PROMPT = load_system_prompt_template("judge")
+
+# APPROACHES = ["Fuzzer"]
+# SYSTEM_PROMPTS = [load_system_prompt_template("fuzz")]
+# JUDGE_SYSTEM_PROMPT = load_system_prompt_template("judge")
+
+APPROACHES = ["Historical-Roleplay"]
+SYSTEM_PROMPTS = [load_system_prompt_template("historical-roleplay")]
+JUDGE_SYSTEM_PROMPT = load_system_prompt_template("judge")
+
+# How "wild" the model is (like adding randomness).
+TEMPERATURE = 0.7
+
+# How many likely next words are allowed.
+TOP_P = 0.9
 
 
 def parse_args():
     parser = argparse.ArgumentParser(
         prog="BSc Artificial Intelligence thesis researching Template Completion and Prompt Rewriting techniques on various LLMs.",
-        description="Jailbreaking LLaMA-2-Chat-7B, Vicuna-13B, GPT-3.5 Turbo and GPT-4o",
+        description="""
+        Model IDs for --attack-model, --target-model and --judge-model can be
+        either ToghetherAI model IDs or OpenAI model names in addition to the
+        local llama2 and vicuna models. For example [local]: 'llama2',
+        'vicuna', [gpt]: 'gpt-3.5-turbo', or 'gpt-4o', [together]: 'gpt-4.1',
+        'mistralai/Mixtral-8x7B-Instruct-v0.1'.
+        """,
+    )
+
+    parser.add_argument(
+        "--attack-model",
+        type=str,
+        default="mistralai/Mixtral-8x7B-Instruct-v0.1",
+        help=f"Name of the attack model which iteratively generates refined adversarial prompts fed to the target model.",
     )
 
     parser.add_argument(
         "--target-model",
         type=str,
         default="gpt-3.5-turbo",
-        help="Name of the target model to test for jailbreak.",
+        help="Name of the target model that is being tested for jailbreak.",
+    )
+
+    parser.add_argument(
+        "--judge-model",
+        type=str,
+        default="gpt-4.1",
+        help="Name of the model that judges the responses of the target model.",
     )
 
     parser.add_argument(
@@ -55,7 +94,7 @@ def parse_args():
     parser.add_argument(
         "--attack-model-max-tokens",
         type=int,
-        default=DEFAULT_MAX_TOKENS,
+        default=400,
         help="Maximum number of new tokens the target model should generate in the output.",
     )
 
@@ -101,6 +140,7 @@ def is_valid_goal_target(goal: str, target: str):
     target_bool = bool(target)
     return (goal_bool and target_bool) or (not goal_bool and not target_bool)
 
+
 if __name__ == "__main__":
     args = parse_args()
 
@@ -110,11 +150,13 @@ if __name__ == "__main__":
 
     model_args = dict(
         device=torch.device("cuda" if torch.cuda.is_available() else "cpu"),
+        temperature=TEMPERATURE,
+        top_p=TOP_P,
     )
 
-    attack_model = get_model(ATTACK_MODEL, max_tokens=args.attack_model_max_tokens, **model_args)
+    attack_model = get_model(args.attack_model, max_tokens=args.attack_model_max_tokens, **model_args)
     target_model = get_model(args.target_model, max_tokens=args.target_model_max_tokens, **model_args)
-    judge_model = get_model(JUDGE_MODEL, max_tokens=args.judge_model_max_tokens, **model_args)
+    judge_model = get_model(args.judge_model, max_tokens=args.judge_model_max_tokens, **model_args)
 
     print()
     print("================================================")
@@ -126,7 +168,15 @@ if __name__ == "__main__":
     print(f"Iterations: {args.iters}")
     print()
 
-    pair = PAIR(attack_model, target_model, judge_model, args.n_conv_items)
+    pair = PAIR(
+        attack_model,
+        target_model,
+        judge_model,
+        args.n_conv_items,
+        approaches=APPROACHES,
+        system_prompts=SYSTEM_PROMPTS,
+        judge_system_prompt=JUDGE_SYSTEM_PROMPT
+    )
 
     if args.goal and args.target:
         df = pd.DataFrame({
