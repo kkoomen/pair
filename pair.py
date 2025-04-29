@@ -1,8 +1,11 @@
 import os
-import concurrent.futures
 import json
 from dotenv import load_dotenv
 import pandas as pd
+import queue
+import time
+import threading
+import itertools
 from logger import setup_logger
 from models.base import Model
 
@@ -163,11 +166,14 @@ class PAIR:
 
     def run_benchmark(self, iters: int, max_workers: int, results_file: str):
         """
-        Run the jailbreak on all behaviors in the benchmark dataset, up to 10 concurrently.
+        Run the jailbreak benchmark with retry prioritization.
+        Retries are placed at the front of the queue to run before new tasks.
         """
+        counter = itertools.count()
         jbb_df = pd.read_csv('behaviors_benchmark.csv')
         results = []
 
+        # Gather all the completed objectives from the results file
         complete_objectives = set()
         if os.path.isfile(results_file):
             with open(results_file, "r") as json_file:
@@ -176,28 +182,51 @@ class PAIR:
                     complete_objectives.add(result['Objective'])
                     results.append(result)
 
-        # Only work on rows not already completed
         rows_to_run = [row for _, row in jbb_df.iterrows() if row['Goal'] not in complete_objectives]
-
         total_rows = len(rows_to_run)
-        self.logger.info(f"Starting benchmark on {total_rows} rows.")
+        self.logger.info(f"Starting benchmark on {total_rows} remaining behaviors.")
 
         completed = 0
+        task_queue = queue.PriorityQueue()
 
-        with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
-            futures = {executor.submit(self.run_single, iters, row, False): row for row in rows_to_run}
+        # Add all initial tasks with low priority (higher number)
+        for row in rows_to_run:
+            task_queue.put((1, 0, next(counter), row.to_dict()))
 
-            for future in concurrent.futures.as_completed(futures):
-                row = futures[future]
+        def worker():
+            nonlocal completed
+            while not task_queue.empty():
                 try:
-                    result = future.result()
-                    results.append(result)
+                    priority, attempts, _, row_dict = task_queue.get_nowait()
+                    row = pd.Series(row_dict)
+                except queue.Empty:
+                    break
 
-                    # Save after each result
+                try:
+                    result = self.run_single(iters, row, False)
+                    results.append(result)
+                    completed += 1
                     with open(results_file, "w") as json_file:
                         json.dump(results, json_file, indent=4)
-
-                    completed += 1
                     self.logger.info(f"Completed {completed}/{total_rows} —  {row['Goal']}")
                 except Exception as e:
-                    self.logger.error(f"Error processing {row['Goal']}: {e}")
+                    if attempts < self.MAX_RETRIES:
+                        self.logger.warning(f"Retrying '{row['Goal']}' (attempt {attempts+1}/{self.MAX_RETRIES}) after error: {e}")
+                        # Retry with higher priority (0)
+                        task_queue.put((0, attempts + 1, next(counter), row_dict))
+                        time.sleep(1)
+                    else:
+                        self.logger.error(f"Failed after {self.MAX_RETRIES} retries: '{row['Goal']}' —  {e}")
+                finally:
+                    task_queue.task_done()
+
+        threads = []
+        for _ in range(max_workers):
+            t = threading.Thread(target=worker)
+            t.start()
+            threads.append(t)
+
+        for t in threads:
+            t.join()
+
+        self.logger.info(f"Benchmarking complete. Results saved to {results_file}.")

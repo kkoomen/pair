@@ -165,9 +165,9 @@ if __name__ == "__main__":
     judge_model = get_model(args.judge_model, max_tokens=args.judge_model_max_tokens, **model_args)
 
     print()
-    print("================================================")
-    print("                     PAIR                       ")
-    print("================================================")
+    print("==================================================")
+    print("                       PAIR                       ")
+    print("==================================================")
     print(f"Attack Model: {attack_model.model_id}")
     print(f"Target Model: {target_model.model_id}")
     print(f"Judge Model: {judge_model.model_id}")
