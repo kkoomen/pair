@@ -85,7 +85,7 @@ class PAIR:
             history += f"SCORE: {item['score']}\n"
         return history
 
-    def algorithm(self, num_iterations: int, attack_objective: str, start_string: str, disable_log=False):
+    def algorithm(self, num_iterations: int, attack_objective: str, start_string: str, verbose=True):
         result = {}
 
         for system_prompt, approach in zip(self.system_prompts, self.approaches):
@@ -93,7 +93,7 @@ class PAIR:
             conversation_history = []
 
             for i in range(num_iterations):
-                if not disable_log:
+                if verbose:
                     self.logger.info(f"({i+1}/{num_iterations}) Attempting to jailbreak with {len(conversation_history)} history items...")
                 if len(conversation_history) == 0:
                     prompt = attack_objective
@@ -110,7 +110,7 @@ class PAIR:
                         break
                     except json.JSONDecodeError as e:
                         retries += 1
-                        if not disable_log:
+                        if verbose:
                             self.logger.info(f"Attacker model's response failed solely return JSON, retrying: {retries}")
 
                 # Call target model with the generated prompt
@@ -129,11 +129,11 @@ class PAIR:
 
                 # If success, return the successful prompt
                 if success:
-                    if not disable_log:
+                    if verbose:
                         self.logger.info("[SUCCESS] Jailbreak found!")
                     return result
 
-                if not disable_log:
+                if verbose:
                     self.logger.info(f"[FAILED] Rating: {rating}, preparing next iteration...")
 
                 attack_prompt_json["score"] = rating
@@ -145,15 +145,15 @@ class PAIR:
 
         return result  # No successful jailbreak found after K iterations
 
-    def run_single(self, iters: int, row: pd.Series, disable_log=False):
-        if not disable_log:
+    def run_single(self, iters: int, row: pd.Series, verbose=True):
+        if verbose:
             self.logger.info(f"Attack Objective: {row['Goal']}")
 
         output = self.algorithm(
             num_iterations=iters,
             attack_objective=row["Goal"],
             start_string=row["Target"],
-            disable_log=disable_log
+            verbose=verbose
         )
 
         return {
