@@ -25,6 +25,9 @@ Next, run `cp .env.example .env` and get yourself the following API keys:
 
 # Examples
 
+> [!TIP]
+> Run `./main.py --help` for a complete list of options.
+
 Jailbreak LLaMA-2 for 10 iterations and use at most 1 history item executing a
 single run.
 
@@ -43,4 +46,5 @@ $ ./main.py --target-model gpt-4.1 --iters 10 --benchmark-workers 8 --benchmark-
 
 > [!NOTE]
 > Increasing `--benchmark-workers` might run into rate limits when using ChatGPT
-> or TogetherAI 
+> or TogetherAI. The default is set to 5, which is a plausible value to use for
+> both ChatGPT and TogetherAI.
