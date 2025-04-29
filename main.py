@@ -79,7 +79,7 @@ def parse_args():
     parser.add_argument(
         "--iters",
         type=int,
-        default=4,
+        default=10,
         help="How many iterations to perform at most on the model for a single goal-target pair",
     )
 
