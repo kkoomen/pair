@@ -18,21 +18,9 @@ os.makedirs("results", exist_ok=True)
 DEFAULT_RESULTS_FILE = "results/pair_results.json"
 DEFAULT_MAX_TOKENS = 256
 
-# APPROACHES = ["Roleplay"]
-# SYSTEM_PROMPTS = [load_system_prompt_template("roleplay")]
-# JUDGE_SYSTEM_PROMPT = load_system_prompt_template("judge")
-
-# APPROACHES = ["Fuzzer"]
-# SYSTEM_PROMPTS = [load_system_prompt_template("fuzz")]
-# JUDGE_SYSTEM_PROMPT = load_system_prompt_template("judge")
-
 APPROACHES = ["Historical-Roleplay"]
 SYSTEM_PROMPTS = [load_system_prompt_template("historical-roleplay")]
 JUDGE_SYSTEM_PROMPT = load_system_prompt_template("judge")
-
-# APPROACHES = ["Historical-Roleplay-Cipher"]
-# SYSTEM_PROMPTS = [load_system_prompt_template("historical-roleplay-cipher")]
-# JUDGE_SYSTEM_PROMPT = load_system_prompt_template("judge")
 
 # How "wild" the model is (like adding randomness).
 TEMPERATURE = 0.7
@@ -92,7 +80,7 @@ def parse_args():
         "--iters",
         type=int,
         default=4,
-        help="How many iterations to perform on the model.",
+        help="How many iterations to perform at most on the model for a single goal-target pair",
     )
 
     parser.add_argument(
