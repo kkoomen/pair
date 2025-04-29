@@ -186,7 +186,7 @@ class PAIR:
         completed = 0
 
         with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
-            futures = {executor.submit(self.run_single, iters, row, True): row for row in rows_to_run}
+            futures = {executor.submit(self.run_single, iters, row, False): row for row in rows_to_run}
 
             for future in concurrent.futures.as_completed(futures):
                 row = futures[future]
