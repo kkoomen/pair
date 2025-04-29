@@ -2,7 +2,6 @@
 # Edit at https://www.toptal.com/developers/gitignore?templates=macos,python,unix,linux,vim
 
 # Project-specific
-/results
 .pretzel
 
 ### Linux ###
