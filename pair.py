@@ -127,11 +127,10 @@ class PAIR:
                     "Rating": rating,
                 })
 
-                # If success, return the successful prompt
                 if success:
                     if verbose:
                         self.logger.info("[SUCCESS] Jailbreak found!")
-                    return result
+                    break
 
                 if verbose:
                     self.logger.info(f"[FAILED] Rating: {rating}, preparing next iteration...")

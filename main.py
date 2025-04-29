@@ -18,8 +18,8 @@ os.makedirs("results", exist_ok=True)
 DEFAULT_RESULTS_FILE = "results/pair_results.json"
 DEFAULT_MAX_TOKENS = 256
 
-APPROACHES = ["Historical-Roleplay"]
-SYSTEM_PROMPTS = [load_system_prompt_template("historical-roleplay")]
+APPROACHES = ["Roleplay", "Historical-Roleplay"]
+SYSTEM_PROMPTS = [load_system_prompt_template("roleplay"), load_system_prompt_template("historical-roleplay")]
 JUDGE_SYSTEM_PROMPT = load_system_prompt_template("judge")
 
 # How "wild" the model is (like adding randomness).
