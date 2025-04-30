@@ -26,8 +26,9 @@ class PAIR:
         approaches: list[str],
         system_prompts: list[str],
         judge_system_prompt: str,
+        log_level: str,
     ):
-        self.logger = setup_logger(self.__class__.__name__)
+        self.logger = setup_logger(self.__class__.__name__, log_level)
         self.attack_model = attack_model
         self.target_model = target_model
         self.judge_model = judge_model

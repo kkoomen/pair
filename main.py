@@ -131,6 +131,14 @@ def parse_args():
         help="Whether to be more verbose.",
     )
 
+    parser.add_argument(
+        "--log-level",
+        type=str,
+        default="info",
+        choices=["debug", "info", "warning", "error", "critical"],
+        help="Specify the benchmark output file.",
+    )
+
     return parser.parse_args()
 
 
