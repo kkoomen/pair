@@ -125,6 +125,12 @@ def parse_args():
         help="Specify the benchmark output file.",
     )
 
+    parser.add_argument(
+        "--verbose",
+        action="store_true",
+        help="Whether to be more verbose.",
+    )
+
     return parser.parse_args()
 
 
@@ -197,5 +203,6 @@ if __name__ == "__main__":
         pair.run_benchmark(
             args.iters,
             args.benchmark_workers,
-            args.benchmark_output_file
+            args.benchmark_output_file,
+            verbose=args.verbose
         )

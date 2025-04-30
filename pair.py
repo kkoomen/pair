@@ -167,7 +167,7 @@ class PAIR:
             "Output": output
         }
 
-    def run_benchmark(self, iters: int, max_workers: int, results_file: str):
+    def run_benchmark(self, iters: int, max_workers: int, results_file: str, verbose: bool):
         """
         Run the jailbreak benchmark with retry prioritization.
         Retries are placed at the front of the queue to run before new tasks.
@@ -206,7 +206,7 @@ class PAIR:
                     break
 
                 try:
-                    result = self.run_single(iters, row, False)
+                    result = self.run_single(iters, row, verbose)
                     results.append(result)
                     completed += 1
                     with open(results_file, "w") as json_file:
