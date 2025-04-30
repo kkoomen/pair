@@ -56,13 +56,13 @@ Below is a list of recommended benchmark commands to run on LLaMA-2, Vicuna and 
 **LLaMA-2:**
 
 ```
-$ main.py --target-model llama2 --benchmark-output-file results/llama2.json --benchmark-workers 1
+$ main.py --target-model llama2 --benchmark-output-file results/llama2.json --benchmark-workers 2
 ```
 
 **Vicuna:**
 
 ```
-$ main.py --target-model vicuna --benchmark-output-file results/vicuna.json --benchmark-workers 1
+$ main.py --target-model vicuna --benchmark-output-file results/vicuna.json --benchmark-workers 2
 ```
 
 **GPT-3.5 Turbo:**
