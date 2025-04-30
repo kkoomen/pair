@@ -1,6 +1,5 @@
-from transformers import AutoTokenizer, AutoModelForCausalLM, TextIteratorStreamer, BitsAndBytesConfig
+from transformers import AutoTokenizer, AutoModelForCausalLM, BitsAndBytesConfig
 import torch
-from threading import Thread
 from logger import setup_logger
 from models.base import Model
 
