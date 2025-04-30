@@ -34,6 +34,8 @@ class TransformerBaseModel(Model):
             device_map="auto"
         )
 
+        model = torch.compile(model)
+
         return model
 
     def get_response(self, messages: list[object]):
@@ -45,6 +47,7 @@ class TransformerBaseModel(Model):
             do_sample=True,
             temperature=self.temperature,
             top_p=self.top_p,
+            use_cache=True,
         )
         response = self.tokenizer.batch_decode(outputs, skip_special_tokens=True)
         return ''.join(response)
