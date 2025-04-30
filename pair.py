@@ -80,13 +80,16 @@ class PAIR:
         return (rating == 10, rating)
 
     def process_history(self, conversation_history: list[dict]):
-        history = ""
-        for item in conversation_history:
-            history += f"\nIMPROVEMENT: {item['improvement']}\n"
-            history += f"PROMPT: {item['prompt']}\n"
-            history += f"LANGUAGE MODEL OUTPUT: {item['response']}\n"
-            history += f"SCORE: {item['score']}\n"
-        return history
+        """
+        Capitalize each key in the history, since the system prompts expects capitalized keys.
+        """
+        return [
+            {
+                key.upper(): value
+                for key, value in entry.items()
+            }
+            for entry in conversation_history
+        ]
 
     def algorithm(self, num_iterations: int, attack_objective: str, start_string: str, verbose=True):
         result = {}
@@ -125,9 +128,9 @@ class PAIR:
                 success, rating = success[0], success[1]
 
                 result[approach].append({
-                    "Prompt": attempt_prompt,
-                    "Response": response_from_target,
-                    "Rating": rating,
+                    "prompt": attempt_prompt,
+                    "response": response_from_target,
+                    "rating": rating,
                 })
 
                 if success:
@@ -170,7 +173,7 @@ class PAIR:
         Retries are placed at the front of the queue to run before new tasks.
         """
         counter = itertools.count()
-        jbb_df = pd.read_csv('behaviors_benchmark.csv')
+        jbb_df = pd.read_csv("behaviors_benchmark.csv")
         results = []
 
         # Gather all the completed objectives from the results file
