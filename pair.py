@@ -187,7 +187,7 @@ class PAIR:
 
         rows_to_run = [row for _, row in jbb_df.iterrows() if row['Goal'] not in complete_objectives]
         total_rows = len(rows_to_run)
-        self.logger.info(f"Starting benchmark on {total_rows} remaining behaviors.")
+        self.logger.info(f"Starting benchmark on {total_rows} remaining behaviors with {max_workers} workers. ")
 
         completed = 0
         task_queue = queue.PriorityQueue()
