@@ -97,7 +97,7 @@ class PAIR:
 
             for i in range(num_iterations):
                 if verbose:
-                    self.logger.info(f"({i+1}/{num_iterations}) Attempting to jailbreak with {len(conversation_history)} history items...")
+                    self.logger.info(f"({i+1}/{num_iterations}) Attempting to jailbreak...")
                 if len(conversation_history) == 0:
                     prompt = attack_objective
                 else:
