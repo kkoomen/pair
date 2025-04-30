@@ -9,6 +9,7 @@ import itertools
 from logger import setup_logger
 from models.base import Model
 from decorators import timer
+from helpers import pluralize
 
 
 load_dotenv()
@@ -200,7 +201,7 @@ class PAIR:
 
         rows_to_run = [row for _, row in jbb_df.iterrows() if row['Goal'] not in complete_objectives]
         total_rows = len(rows_to_run)
-        self.logger.info(f"Starting benchmark on {total_rows} remaining behaviors with {max_workers} workers. ")
+        self.logger.info(f"Starting benchmark on {total_rows} remaining behaviors with {pluralize(max_workers, 'worker', 'workers')}. ")
 
         completed = 0
         task_queue = queue.PriorityQueue()

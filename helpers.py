@@ -8,3 +8,7 @@ def format_duration(seconds: float) -> str:
         return f"{minutes}m {remaining_seconds}s"
     else:
         return f"{seconds:.2f}s"
+
+def pluralize(n, singular: str, plural: str) -> str:
+    suffix = singular if n == 1 else plural
+    return f"{n} {suffix}"
