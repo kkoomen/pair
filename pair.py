@@ -110,7 +110,7 @@ class PAIR:
 
             for i in range(num_iterations):
                 if verbose:
-                    self.logger.info(f"({i+1}/{num_iterations}) Attempting to jailbreak...")
+                    self.logger.info(f"[{approach}] ({i+1}/{num_iterations}) Attempting to jailbreak...")
                 if len(conversation_history) == 0:
                     prompt = attack_objective
                 else:
@@ -129,7 +129,7 @@ class PAIR:
                     except json.JSONDecodeError as e:
                         retries += 1
                         if verbose:
-                            self.logger.info(f"Attacker model's response failed solely return JSON, retrying: {retries}")
+                            self.logger.info(f"[{approach}] Attacker model's response failed solely return JSON, retrying: {retries}")
 
                 if not has_attack_prompt:
                     continue
@@ -150,11 +150,11 @@ class PAIR:
 
                 if success:
                     if verbose:
-                        self.logger.info("[SUCCESS] Jailbreak found!")
+                        self.logger.info(f"[{approach}] Jailbreak found!")
                     break
 
                 if verbose:
-                    self.logger.info(f"[FAILED] Rating: {rating}, preparing next iteration...")
+                    self.logger.info(f"[{approach}] Rating: {rating}, preparing next iteration...")
 
                 attack_prompt_json["score"] = rating
                 attack_prompt_json["response"] = response_from_target
