@@ -146,7 +146,7 @@ def get_model(model_id: str, *args, **kwargs):
     if model_id == "llama2":
         return Llama2(*args, **kwargs)
     elif model_id == "vicuna":
-        return Vicuna(*args, **kwargs):
+        return Vicuna(*args, **kwargs)
     if model_id.startswith("gpt-"):
         return GPT(model_id, *args, **kwargs)
     elif re.match(r"^[a-zA-Z0-9._-]+\/[a-zA-Z0-9._-]+$", model_id):
