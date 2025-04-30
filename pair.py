@@ -99,6 +99,9 @@ class PAIR:
         ]
 
     def algorithm(self, num_iterations: int, attack_objective: str, start_string: str, verbose=True):
+        """
+        Actual PAIR algorithm implementation.
+        """
         result = {}
 
         for system_prompt, approach in zip(self.system_prompts, self.approaches):
@@ -119,9 +122,7 @@ class PAIR:
                 retries = 0
                 for _ in range(self.MAX_RETRIES):
                     try:
-                        start = time.time()
                         adversarial_prompt = self.call_attacker_model(prompt, attack_objective, system_prompt, start_string)
-                        duration = time.time() - start
                         attack_prompt_json = json.loads(adversarial_prompt)
                         has_attack_prompt = True
                         break

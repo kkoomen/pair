@@ -38,6 +38,9 @@ class TransformerBaseModel(Model):
 
         return model
 
+    def post_process_response(self, response: str) -> str:
+        return response
+
     def get_response(self, messages: list[object]):
         prompt = self.get_chat_template(messages)
         inputs = self.tokenizer(prompt, return_tensors="pt").to(self.device)
@@ -49,5 +52,6 @@ class TransformerBaseModel(Model):
             top_p=self.top_p,
             use_cache=True,
         )
-        response = self.tokenizer.batch_decode(outputs, skip_special_tokens=True)
-        return ''.join(response)
+        response = ''.join(self.tokenizer.batch_decode(outputs, skip_special_tokens=True))
+        response = self.post_process_response(response)
+        return response

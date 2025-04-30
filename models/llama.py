@@ -1,4 +1,5 @@
 from models.transformer_base import TransformerBaseModel
+import re
 
 
 class Llama2(TransformerBaseModel):
@@ -35,3 +36,6 @@ class Llama2(TransformerBaseModel):
             tokenize=False,
             add_generation_prompt=True
         )
+
+    def post_process_response(self, response: str) -> str:
+        return re.sub(r'\[INST\].*?\[/INST\]', '', response, flags=re.DOTALL).strip()

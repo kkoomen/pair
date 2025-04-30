@@ -1,4 +1,5 @@
 from models.transformer_base import TransformerBaseModel
+import re
 
 
 class Vicuna(TransformerBaseModel):
@@ -33,3 +34,7 @@ class Vicuna(TransformerBaseModel):
                 template += f"\nASSISTANT: {message['content']}"
 
         return template
+
+    def post_process_response(self, response: str) -> str:
+        return re.sub(r'### System:.*?System:\n*', '', response, flags=re.DOTALL).strip()
+
