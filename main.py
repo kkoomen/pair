@@ -195,7 +195,8 @@ if __name__ == "__main__":
         args.n_conv_items,
         approaches=APPROACHES,
         system_prompts=SYSTEM_PROMPTS,
-        judge_system_prompt=JUDGE_SYSTEM_PROMPT
+        judge_system_prompt=JUDGE_SYSTEM_PROMPT,
+        log_level=args.log_level,
     )
 
     if args.goal and args.target:
