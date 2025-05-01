@@ -10,6 +10,7 @@ base_command = ["./main.py", *sys.argv[1:]]
 num_runs = 10
 total_done = 0
 
+
 def run_command():
     global total_done
     try:
@@ -24,6 +25,7 @@ def run_command():
         return result.stdout
     except subprocess.CalledProcessError as e:
         return f"Error: {e.stderr}"
+
 
 def main():
     print(f"Total done: 0/{num_runs}", end="\r")

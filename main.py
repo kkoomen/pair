@@ -20,10 +20,20 @@ DEFAULT_MAX_TOKENS = 256
 APPROACHES = [
     "Roleplay",
     "Hist-Roleplay",
+    "Hist-Roleplay-NL",
+    "Hist-Roleplay-DE",
+    "Hist-Roleplay-FR",
+    "Hist-Roleplay-ZH",
 ]
+
+hist_rp_lang_template = load_system_prompt_template("historical-roleplay-lang")
 SYSTEM_PROMPTS = [
     load_system_prompt_template("roleplay"),
     load_system_prompt_template("historical-roleplay"),
+    hist_rp_lang_template.replace('[[LANG]]', 'Dutch'),
+    hist_rp_lang_template.replace('[[LANG]]', 'German'),
+    hist_rp_lang_template.replace('[[LANG]]', 'French'),
+    hist_rp_lang_template.replace('[[LANG]]', 'Simplified Chinese'),
 ]
 JUDGE_SYSTEM_PROMPT = load_system_prompt_template("judge")
 

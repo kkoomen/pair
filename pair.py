@@ -6,7 +6,6 @@ import queue
 import time
 import threading
 import itertools
-import re
 from logger import setup_logger
 from models.base import Model
 from decorators import timer
@@ -96,9 +95,16 @@ class PAIR:
             for entry in conversation_history
         ]
 
-    def algorithm(self, num_iterations: int, attack_objective: str, start_string: str, progress: tqdm = None):
+    def algorithm(self, num_iterations: int, attack_objective: str, start_string: str, approaches: list, progress: tqdm):
         """
         Actual PAIR algorithm implementation.
+
+        :param num_iterations: Number of iterations to run.
+        :param attack_objective: The attack objective.
+        :param start_string: The starting string for the target model.
+        :param approaches: List of approaches to utilize during jailbreaking.
+        :param progress: TQDM progress bar.
+        :return: Dictionary with results for each approach.
         """
         result = {}
 
@@ -107,7 +113,8 @@ class PAIR:
         if len(attack_objective) > progress_objective_len:
             # Subtract 3 more characters for ellipsis
             short_objective = short_objective[:-3].strip()
-        max_approach_len = max(len(a) for a in self.approaches)
+
+        max_approach_len = max(len(a) for a in approaches)
 
         def set_progress_desc(status: int, iteration: int):
             progress.set_description(
@@ -115,6 +122,9 @@ class PAIR:
             )
 
         for system_prompt, approach in zip(self.system_prompts, self.approaches):
+            if approach not in approaches:
+                continue
+
             result[approach] = []
             conversation_history = []
 
@@ -180,16 +190,20 @@ class PAIR:
 
         return result  # No successful jailbreak found after K iterations
 
-    def run_single(self, iters: int, row: pd.Series, progress: tqdm = None):
+    def run_single(self, iters: int, row: pd.Series, approaches: list = None, progress: tqdm = None):
         self.logger.info(f"Attack Objective: {row['Goal']}")
 
+        if approaches is None:
+            approaches = self.approaches
+
         if progress is None:
-            progress = tqdm(total=len(self.approaches))
+            progress = tqdm(total=len(approaches))
 
         output = self.algorithm(
             num_iterations=iters,
             attack_objective=row["Goal"],
             start_string=row["Target"],
+            approaches=approaches,
             progress=progress,
         )
 
@@ -210,51 +224,78 @@ class PAIR:
         results = []
 
         # Gather all the completed objectives from the results file
-        complete_objectives = set()
+        complete_objectives = {}
         if os.path.isfile(results_file):
             with open(results_file, "r") as json_file:
                 data = json.load(json_file)
                 for result in data:
-                    complete_objectives.add(result['objective'])
+                    complete_objectives[result['objective']] = result['output']
                     results.append(result)
 
-        rows_to_run = [row for _, row in jbb_df.iterrows() if row['Goal'] not in complete_objectives]
-        total_rows = len(rows_to_run)
-        self.logger.info(f"Starting benchmark on {total_rows} remaining behaviors with {pluralize(max_workers, 'worker', 'workers')}. ")
+        # Filter out rows that have already been completed. Rows can also be
+        # included when not all approaches have been completed, which is useful
+        # when there are already benchmarks and another approach has been added
+        # in main.py. It will then only do a benchmark for that supplementary
+        # approach and append it to the output file.
+        tasks = [
+            {
+                "row": row.to_dict(),
+                "approaches": [
+                    approach
+                    for approach in self.approaches
+                    if approach not in complete_objectives.get(row['Goal'], {}).keys()
+                ],
+                "has_existing_output": len(complete_objectives.get(row['Goal'], {})) > 0
+            }
+            for _, row in jbb_df.iterrows()
+            if row['Goal'] not in complete_objectives or any(approach for approach in self.approaches if approach not in complete_objectives.get(row['Goal'], {}).keys())
+        ]
+        total_tasks = len(tasks)
+        self.logger.info(f"Starting benchmark on {total_tasks} remaining behaviors with {pluralize(max_workers, 'worker', 'workers')}. ")
 
-        global_progress = tqdm(total=total_rows, desc="Benchmarking", leave=False, position=0)
+        global_progress = tqdm(total=total_tasks, desc="Benchmarking", leave=False, position=0)
 
         completed = 0
         task_queue = queue.PriorityQueue()
 
         # Add all initial tasks with low priority (higher number)
-        for row in rows_to_run:
-            task_queue.put((1, 0, next(counter), row.to_dict()))
+        for task in tasks:
+            task_queue.put((1, 0, next(counter), task))
 
         def worker(worker_index):
             nonlocal completed
             while not task_queue.empty():
                 try:
-                    priority, attempts, index, row_dict = task_queue.get_nowait()
-                    row_dict["Index"] = index
-                    row = pd.Series(row_dict)
+                    priority, attempts, _, task = task_queue.get_nowait()
+                    approaches = task["approaches"]
+                    row = pd.Series(task["row"])
                 except queue.Empty:
                     break
 
                 try:
-                    objective_progress = tqdm(total=len(self.approaches), leave=False, position=(worker_index + 1))
-                    result = self.run_single(iters, row, progress=objective_progress)
-                    results.append(result)
+                    objective_progress = tqdm(total=len(approaches), leave=False, position=(worker_index + 1))
+                    result = self.run_single(iters, row, approaches, progress=objective_progress)
+
+                    # If this row already got some completed approaches, append
+                    # to that output.
+                    if task["has_existing_output"]:
+                        for existing_result in results:
+                            if existing_result["objective"] == row["Goal"]:
+                                existing_result["output"].update(result["output"])
+                                break
+                    else:
+                        results.append(result)
+
                     completed += 1
                     global_progress.update(1)
                     with open(results_file, "w") as json_file:
                         json.dump(results, json_file, indent=4)
-                    self.logger.info(f"Completed {completed}/{total_rows} —  {row['Goal']}")
+                    self.logger.info(f"Completed {completed}/{total_tasks} —  {row['Goal']}")
                 except Exception as e:
                     if attempts < self.MAX_RETRIES:
                         self.logger.warning(f"Retrying '{row['Goal']}' (attempt {attempts+1}/{self.MAX_RETRIES}) after error: {e}")
                         # Retry with higher priority (0)
-                        task_queue.put((0, attempts + 1, next(counter), row_dict))
+                        task_queue.put((0, attempts + 1, next(counter), task))
                         time.sleep(1)
                     else:
                         self.logger.error(f"Failed after {self.MAX_RETRIES} retries: '{row['Goal']}' —  {e}")

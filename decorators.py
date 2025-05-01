@@ -2,6 +2,7 @@ import time
 import functools
 from helpers import format_duration
 
+
 def timer(func):
     @functools.wraps(func)
     def wrapper(self, *args, **kwargs):
