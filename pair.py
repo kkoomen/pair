@@ -42,24 +42,20 @@ class PAIR:
 
     @timer
     def call_attacker_model(self, prompt: str, objective: str, system_prompt: str, start_string: str):
+        system_prompt = system_prompt \
+            .replace(r"[[GOAL]]", objective) \
+            .replace(r"[[TARGET]]", start_string) \
+            .replace('[[TARGET MODEL NAME]]', self.target_model.model_name)
+
         return self.attack_model.get_response([
-            {
-                "role": "system",
-                "content": system_prompt.replace(r"[[GOAL]]", objective).replace(r"[[TARGET]]", start_string)
-            },
-            {
-                "role": "user",
-                "content": prompt
-            },
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": prompt},
         ])
 
     @timer
     def call_target_model(self, prompt: str):
         return self.target_model.get_response([
-            {
-                "role": "user",
-                "content": prompt
-            },
+            {"role": "user", "content": prompt},
         ])
 
     @timer

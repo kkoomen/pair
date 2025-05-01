@@ -163,7 +163,6 @@ if __name__ == "__main__":
         sys.exit(1)
 
     model_args = dict(
-        device=torch.device("cuda" if torch.cuda.is_available() else "cpu"),
         temperature=TEMPERATURE,
         top_p=TOP_P,
     )
