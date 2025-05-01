@@ -126,12 +126,6 @@ def parse_args():
     )
 
     parser.add_argument(
-        "--verbose",
-        action="store_true",
-        help="Whether to be more verbose.",
-    )
-
-    parser.add_argument(
         "--log-level",
         type=str,
         default="info",
@@ -213,5 +207,4 @@ if __name__ == "__main__":
             args.iters,
             args.benchmark_workers,
             args.benchmark_output_file,
-            verbose=args.verbose
         )

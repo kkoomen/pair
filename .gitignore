@@ -3,6 +3,7 @@
 
 # Project-specific
 .pretzel
+/logs
 
 ### Linux ###
 *~
