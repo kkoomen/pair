@@ -6,7 +6,6 @@ import json
 import os
 import argparse
 import re
-import torch
 from models.llama import Llama2
 from models.vicuna import Vicuna
 from models.gpt import GPT
@@ -18,8 +17,14 @@ os.makedirs("results", exist_ok=True)
 DEFAULT_RESULTS_FILE = "results/pair_results.json"
 DEFAULT_MAX_TOKENS = 256
 
-APPROACHES = ["Roleplay", "Historical-Roleplay"]
-SYSTEM_PROMPTS = [load_system_prompt_template("roleplay"), load_system_prompt_template("historical-roleplay")]
+APPROACHES = [
+    "Roleplay",
+    "Hist-Roleplay",
+]
+SYSTEM_PROMPTS = [
+    load_system_prompt_template("roleplay"),
+    load_system_prompt_template("historical-roleplay"),
+]
 JUDGE_SYSTEM_PROMPT = load_system_prompt_template("judge")
 
 # How "wild" the model is (like adding randomness).
