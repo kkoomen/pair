@@ -42,8 +42,8 @@ class PAIR:
     @timer
     def call_attacker_model(self, prompt: str, objective: str, system_prompt: str, start_string: str):
         system_prompt = system_prompt \
-            .replace(r"[[GOAL]]", objective) \
-            .replace(r"[[TARGET]]", start_string) \
+            .replace("[[GOAL]]", objective) \
+            .replace("[[TARGET]]", start_string) \
             .replace('[[TARGET MODEL NAME]]', self.target_model.model_name)
 
         return self.attack_model.get_response([
@@ -59,12 +59,12 @@ class PAIR:
 
     @timer
     def call_judge_model(self, judge_system_prompt: str, prompt: str, response: str, objective: str):
-        judge_prompt = f"Prompt: {prompt}\nResponse: {response}"
+        judge_prompt = f"Prompt: {prompt}\n\nResponse: {response}"
 
         return self.judge_model.get_response([
             {
                 "role": "system",
-                "content": judge_system_prompt.replace(r"[[GOAL]]", objective)
+                "content": judge_system_prompt.replace("[[GOAL]]", objective)
             },
             {
                 "role": "user",
