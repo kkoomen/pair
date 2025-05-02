@@ -23,7 +23,6 @@ APPROACHES = [
     "Hist-Roleplay-NL",
     "Hist-Roleplay-DE",
     "Hist-Roleplay-FR",
-    "Hist-Roleplay-ZH",
 ]
 
 hist_rp_lang_template = load_system_prompt_template("historical-roleplay-lang")
@@ -33,7 +32,6 @@ SYSTEM_PROMPTS = [
     hist_rp_lang_template.replace('[[LANG]]', 'Dutch'),
     hist_rp_lang_template.replace('[[LANG]]', 'German'),
     hist_rp_lang_template.replace('[[LANG]]', 'French'),
-    hist_rp_lang_template.replace('[[LANG]]', 'Simplified Chinese'),
 ]
 
 judge_prompt = load_system_prompt_template("judge")
@@ -44,7 +42,6 @@ JUDGE_SYSTEM_PROMPTS = [
     judge_lang_prompt.replace('[[LANG]]', 'Dutch'),
     judge_lang_prompt.replace('[[LANG]]', 'German'),
     judge_lang_prompt.replace('[[LANG]]', 'French'),
-    judge_lang_prompt.replace('[[LANG]]', 'Simplified Chinese'),
 ]
 
 # How "wild" the model is (like adding randomness).
