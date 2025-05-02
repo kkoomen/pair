@@ -51,28 +51,6 @@ $ ./main.py --target-model gpt-4.1 --benchmark-workers 8 --benchmark-output-file
 
 ## Benchmarking
 
-Below is a list of recommended benchmark commands to run on LLaMA-2, Vicuna and GPT models:
-
-**LLaMA-2:**
-
-```
-$ main.py --target-model llama2 --benchmark-output-file results/llama2.json --benchmark-workers 2
-```
-
-**Vicuna:**
-
-```
-$ main.py --target-model vicuna --benchmark-output-file results/vicuna.json --benchmark-workers 2
-```
-
-**GPT-3.5 Turbo:**
-
-```
-$ main.py --target-model gpt-3.5-turbo --benchmark-output-file results/gpt_3_5.json
-```
-
-**GPT-4.1:**
-
-```
-$ main.py --target-model gpt-4.1 --benchmark-output-file results/gpt_4_1.json
-```
+Run `./benchmark.sh` to perform benchmarks on the LLaMA-2-7B, Vicuna-13B,
+GPT-3.5 Turbo and GPT-4o models using the Jailbreaking Bench Harmful Behaviors
+dataset.
