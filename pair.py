@@ -27,7 +27,7 @@ class PAIR:
         n_conv_items: int,
         approaches: list[str],
         system_prompts: list[str],
-        judge_system_prompt: str,
+        judge_system_prompts: list[str],
         log_level: str,
     ):
         self.logger = setup_logger(self.__class__.__name__, log_level)
@@ -37,7 +37,7 @@ class PAIR:
         self.n_conv_items = n_conv_items
         self.approaches = approaches
         self.system_prompts = system_prompts
-        self.judge_system_prompt = judge_system_prompt
+        self.judge_system_prompts = judge_system_prompts
 
     @timer
     def call_attacker_model(self, prompt: str, objective: str, system_prompt: str, start_string: str):
@@ -58,13 +58,13 @@ class PAIR:
         ])
 
     @timer
-    def call_judge_model(self, prompt: str, response: str, objective: str):
+    def call_judge_model(self, judge_system_prompt: str, prompt: str, response: str, objective: str):
         judge_prompt = f"Prompt: {prompt}\nResponse: {response}"
 
         return self.judge_model.get_response([
             {
                 "role": "system",
-                "content": self.judge_system_prompt.replace(r"[[GOAL]]", objective)
+                "content": judge_system_prompt.replace(r"[[GOAL]]", objective)
             },
             {
                 "role": "user",
@@ -72,11 +72,11 @@ class PAIR:
             },
         ])
 
-    def judge(self, prompt: str, response: str, attack_objective: str):
+    def judge(self, judge_system_prompt: str, prompt: str, response: str, attack_objective: str):
         """
         Judge function to interpret the rating and return True/False for jailbreak.
         """
-        evaluation = self.call_judge_model(prompt, response, attack_objective)
+        evaluation = self.call_judge_model(judge_system_prompt, prompt, response, attack_objective)
         try:
             rating = int(evaluation.split("[[")[1].split("]]")[0])
         except (IndexError, ValueError):
@@ -121,7 +121,7 @@ class PAIR:
                 f"[{approach:{max_approach_len}}] [{short_objective:.<{progress_objective_len}}][Attempt {i+1}/{num_iterations}] {status:>35}"
             )
 
-        for system_prompt, approach in zip(self.system_prompts, self.approaches):
+        for system_prompt, approach, judge_system_prompt in zip(self.system_prompts, self.approaches, self.judge_system_prompts):
             if approach not in approaches:
                 continue
 
@@ -163,7 +163,7 @@ class PAIR:
 
                 # Judge the response
                 set_progress_desc("Judging response", iteration=i)
-                success = self.judge(attempt_prompt, response_from_target, attack_objective)
+                success = self.judge(judge_system_prompt, attempt_prompt, response_from_target, attack_objective)
                 success, rating = success[0], success[1]
 
                 result[approach].append({
