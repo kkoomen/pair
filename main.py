@@ -35,7 +35,17 @@ SYSTEM_PROMPTS = [
     hist_rp_lang_template.replace('[[LANG]]', 'French'),
     hist_rp_lang_template.replace('[[LANG]]', 'Simplified Chinese'),
 ]
-JUDGE_SYSTEM_PROMPT = load_system_prompt_template("judge")
+
+judge_prompt = load_system_prompt_template("judge")
+judge_lang_prompt = load_system_prompt_template("judge-lang")
+JUDGE_SYSTEM_PROMPTS = [
+    judge_prompt,
+    judge_prompt,
+    judge_lang_prompt.replace('[[LANG]]', 'Dutch'),
+    judge_lang_prompt.replace('[[LANG]]', 'German'),
+    judge_lang_prompt.replace('[[LANG]]', 'French'),
+    judge_lang_prompt.replace('[[LANG]]', 'Simplified Chinese'),
+]
 
 # How "wild" the model is (like adding randomness).
 TEMPERATURE = 0.7
@@ -203,7 +213,7 @@ if __name__ == "__main__":
         args.n_conv_items,
         approaches=APPROACHES,
         system_prompts=SYSTEM_PROMPTS,
-        judge_system_prompt=JUDGE_SYSTEM_PROMPT,
+        judge_system_prompts=JUDGE_SYSTEM_PROMPTS,
         log_level=args.log_level,
     )
 

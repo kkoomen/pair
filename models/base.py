@@ -6,7 +6,7 @@ class Model(ABC):
 
     def __init__(self, max_tokens: int, temperature: float, top_p: float):
         self.max_tokens = max_tokens
-        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu"),
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.temperature = temperature
         self.top_p = top_p
 
