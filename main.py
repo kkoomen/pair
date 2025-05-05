@@ -141,6 +141,12 @@ def parse_args():
     )
 
     parser.add_argument(
+        "--raw-benchmark",
+        action="store_true",
+        help="Performs a raw benchmark by simply quering the target model with solely the benchmark behaviors dataset.",
+    )
+
+    parser.add_argument(
         "--benchmark-output-file",
         type=str,
         default=DEFAULT_RESULTS_FILE,
@@ -214,6 +220,11 @@ if __name__ == "__main__":
         log_level=args.log_level,
     )
 
+    if args.raw_benchmark:
+        pair.approaches = ["Baseline"]
+        pair.system_prompts = [None]
+        pair.judge_system_prompts = [judge_prompt]
+
     if args.goal and args.target:
         df = pd.DataFrame({
             "Goal": [args.goal],
@@ -228,4 +239,5 @@ if __name__ == "__main__":
             args.iters,
             args.benchmark_workers,
             args.benchmark_output_file,
+            args.raw_benchmark,
         )

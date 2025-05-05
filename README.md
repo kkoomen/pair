@@ -54,3 +54,7 @@ $ ./main.py --target-model gpt-4.1 --benchmark-workers 8 --benchmark-output-file
 Run `./benchmark.sh` to perform benchmarks on the LLaMA-2-7B, Vicuna-13B,
 GPT-3.5 Turbo and GPT-4o models using the Jailbreaking Bench Harmful Behaviors
 dataset.
+
+Run `./raw_benchmark.sh` to perform a raw benchmark without the attacker model
+and solely querying the target model with the raw prompt from the behaviors
+dataset.
