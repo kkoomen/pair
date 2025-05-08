@@ -21,7 +21,10 @@ $ pip3 install -r requirements.txt
 Next, run `cp .env.example .env` and get yourself the following API keys:
 - (paid) [OpenAI API key](https://platform.openai.com/settings/organization/api-keys) to use GPT-4.1 as a judge model.
 - (paid) [TogetherAI API key](https://api.together.ai/settings/api-keys) to use Mixtral-8x7B-Instruct as the attack LLM.
-- (free) [Hugging Face API key](https://huggingface.co/settings/tokens) to use the LLaMA-2-7B and Vicuna-13B as target models.
+
+To use the LLaMA-2-7B and Vicuna-13B as target models, the `transformers`
+package is used and the models are loaded locally onto a GPU workstation with
+64GB of memory from the University of Amsterdam.
 
 # Examples
 
