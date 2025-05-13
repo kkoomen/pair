@@ -19,7 +19,7 @@ class GPT(Model):
     def get_response(self, messages: list[object]):
         response = self.client.chat.completions.create(
             model=self.model_id,
-            messages=messages,
+            messages=self.get_chat_template(messages),
             max_tokens=self.max_tokens,
             temperature=self.temperature,
             top_p=self.top_p,
