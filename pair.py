@@ -221,13 +221,13 @@ class PAIR:
         }
 
     @timer
-    def run_benchmark(self, iters: int, max_workers: int, results_file: str, raw_benchmark=False):
+    def run_benchmark(self, iters: int, max_workers: int, results_file: str, dataset_path: str, raw_benchmark=False):
         """
         Run the jailbreak benchmark with retry prioritization.
         Retries are placed at the front of the queue to run before new tasks.
         """
         counter = itertools.count()
-        jbb_df = pd.read_csv("behaviors_benchmark.csv")
+        jbb_df = pd.read_csv(dataset_path)
         results = []
 
         # Gather all the completed objectives from the results file

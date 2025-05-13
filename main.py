@@ -154,6 +154,14 @@ def parse_args():
     )
 
     parser.add_argument(
+        "--dataset-path",
+        type=str,
+        default="./datasets/misuse_behaviors.csv",
+        choices=["./datasets/misuse_behaviors.csv", "./datasets/benign_behaviors.csv"],
+        help="Specify dataset path to be used during the benchmark.",
+    )
+
+    parser.add_argument(
         "--log-level",
         type=str,
         default="info",
@@ -239,5 +247,6 @@ if __name__ == "__main__":
             args.iters,
             args.benchmark_workers,
             args.benchmark_output_file,
+            args.dataset_path,
             args.raw_benchmark,
         )
