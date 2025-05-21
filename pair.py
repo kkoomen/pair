@@ -57,7 +57,7 @@ class PAIR:
     def call_target_model(self, prompt: str):
         messages = []
 
-        if self.target_model_system_prompt:
+        if self.target_model_system_prompt is not None:
             messages.append({
                 "role": "system",
                 "content": self.target_model_system_prompt
