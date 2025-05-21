@@ -29,6 +29,7 @@ class PAIR:
         system_prompts: list[str],
         judge_system_prompts: list[str],
         log_level: str,
+        target_model_system_prompt: str = None,
     ):
         self.logger = setup_logger(self.__class__.__name__, log_level)
         self.attack_model = attack_model
@@ -38,6 +39,7 @@ class PAIR:
         self.approaches = approaches
         self.system_prompts = system_prompts
         self.judge_system_prompts = judge_system_prompts
+        self.target_model_system_prompt = target_model_system_prompt
 
     @timer
     def call_attacker_model(self, prompt: str, objective: str, system_prompt: str, start_string: str):
@@ -53,9 +55,17 @@ class PAIR:
 
     @timer
     def call_target_model(self, prompt: str):
-        return self.target_model.get_response([
-            {"role": "user", "content": prompt},
-        ])
+        messages = []
+
+        if self.target_model_system_prompt:
+            messages.append({
+                "role": "system",
+                "content": self.target_model_system_prompt
+            })
+
+        messages.append({"role": "user", "content": prompt})
+
+        return self.target_model.get_response(messages)
 
     @timer
     def call_judge_model(self, judge_system_prompt: str, prompt: str, response: str, objective: str):

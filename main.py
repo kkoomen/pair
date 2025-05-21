@@ -10,39 +10,12 @@ from models.llama import Llama2
 from models.vicuna import Vicuna
 from models.gpt import GPT
 from models.together import Together
-from helpers import load_system_prompt_template
+from constants import MODES
 import sys
 
 os.makedirs("results", exist_ok=True)
 DEFAULT_RESULTS_FILE = "results/pair_results.json"
 DEFAULT_MAX_TOKENS = 256
-
-APPROACHES = [
-    "Roleplay",
-    "Hist-Roleplay",
-    "Hist-Roleplay-NL",
-    "Hist-Roleplay-DE",
-    "Hist-Roleplay-FR",
-]
-
-hist_rp_lang_template = load_system_prompt_template("historical-roleplay-lang")
-SYSTEM_PROMPTS = [
-    load_system_prompt_template("roleplay"),
-    load_system_prompt_template("historical-roleplay"),
-    hist_rp_lang_template.replace('[[LANG]]', 'Dutch'),
-    hist_rp_lang_template.replace('[[LANG]]', 'German'),
-    hist_rp_lang_template.replace('[[LANG]]', 'French'),
-]
-
-judge_prompt = load_system_prompt_template("judge")
-judge_lang_prompt = load_system_prompt_template("judge-lang")
-JUDGE_SYSTEM_PROMPTS = [
-    judge_prompt,
-    judge_prompt,
-    judge_lang_prompt.replace('[[LANG]]', 'Dutch'),
-    judge_lang_prompt.replace('[[LANG]]', 'German'),
-    judge_lang_prompt.replace('[[LANG]]', 'French'),
-]
 
 # How "wild" the model is (like adding randomness).
 TEMPERATURE = 0.7
@@ -64,10 +37,17 @@ def parse_args():
     )
 
     parser.add_argument(
+        "--mode",
+        type=str,
+        default="misuse",
+        help=f"Specify the mode to run the benchmark, which will use the corresponding approaches, attack system prompts and judge system prompts. Options: {''.join(MODES.keys())}",
+    )
+
+    parser.add_argument(
         "--attack-model",
         type=str,
         default="mistralai/Mixtral-8x7B-Instruct-v0.1",
-        help=f"Name of the attack model which iteratively generates refined adversarial prompts fed to the target model.",
+        help="Name of the attack model which iteratively generates refined adversarial prompts fed to the target model.",
     )
 
     parser.add_argument(
@@ -75,6 +55,13 @@ def parse_args():
         type=str,
         default="gpt-3.5-turbo",
         help="Name of the target model that is being tested for jailbreak.",
+    )
+
+    parser.add_argument(
+        "--target-model-system-prompt",
+        type=str,
+        default=None,
+        help="Path to the system prompt text file for the target model. If not provided, the default system prompt will be used.",
     )
 
     parser.add_argument(
@@ -211,27 +198,30 @@ if __name__ == "__main__":
     print("==================================================")
     print("                       PAIR                       ")
     print("==================================================")
-    print(f"Attack Model: {attack_model.model_id}")
+    if not args.raw_benchmark:
+        print(f"Attack Model: {attack_model.model_id}")
     print(f"Target Model: {target_model.model_id}")
     print(f"Judge Model: {judge_model.model_id}")
     print(f"Iterations: {args.iters}")
     print()
+
+    raw_mode = f"{args.mode}-raw"
+    if args.raw_benchmark and raw_mode in MODES:
+        mode_prompts = MODES.get(raw_mode)
+    else:
+        mode_prompts = MODES.get(args.mode)
 
     pair = PAIR(
         attack_model,
         target_model,
         judge_model,
         args.n_conv_items,
-        approaches=APPROACHES,
-        system_prompts=SYSTEM_PROMPTS,
-        judge_system_prompts=JUDGE_SYSTEM_PROMPTS,
+        approaches=mode_prompts["approaches"],
+        system_prompts=mode_prompts["system_prompts"],
+        judge_system_prompts=mode_prompts["judge_system_prompts"],
         log_level=args.log_level,
+        target_model_system_prompt=args.target_model_system_prompt,
     )
-
-    if args.raw_benchmark:
-        pair.approaches = ["Baseline"]
-        pair.system_prompts = [None]
-        pair.judge_system_prompts = [judge_prompt]
 
     if args.goal and args.target:
         df = pd.DataFrame({
