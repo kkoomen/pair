@@ -105,3 +105,9 @@ An example for GPT-4o is:
 ```
 ./main.py --mode defense --target-model gpt-4o --benchmark-output-file ./results/gpt_4o_defense.json
 ```
+
+Or for local models such as LLaMA 2 or Vicuna:
+
+```
+./main.py --mode defense --target-model vicuna --benchmark-output-file ./results/vicuna_defense.json --benchmark-workers 2
+```
