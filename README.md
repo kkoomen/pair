@@ -1,9 +1,9 @@
 # Jailbreaking Various Large Language Models by Exploiting Template Completion and Prompt Rewriting
 
 Despite advancements in alignment techniques, Large Language Models (LLMs)
-remain vulnerable to \textit{jailbreaking}---the use of adversarial inputs to
+remain vulnerable to _jailbreaking_---the use of adversarial inputs to
 bypass alignment safeguards. This thesis evaluates the effectiveness of common
-\textit{Template Completion} and \textit{Prompt Rewriting} black-box attack
+_Template Completion_ and _Prompt Rewriting_ black-box attack
 methods described in [Yi et al. (2024)](https://arxiv.org/abs/2407.04295). The
 results demonstrate that role-playing remains one of the most effective
 jailbreaking attack methods, coaxing the model into role-playing a character in
@@ -21,10 +21,10 @@ with the Prompt Automatic Iterative Refinement (PAIR; [Chao et al.,
 2025](https://doi.org/10.48550/arXiv.2310.08419)) algorithm to benchmark the
 effectiveness of jailbreaking attacks on four different target LLMs:
 LLaMA-2-Chat-7B, Vicuna-13B-v1.5, GPT-3.5 Turbo and GPT-4o. Additionally, this
-thesis proposes a novel role-playing attack method, termed \textit{historical
-role-playing}, in which historical framing is exploited to elicit harmful
+thesis proposes a novel role-playing attack method, termed _historical
+role-playing_, in which historical framing is exploited to elicit harmful
 responses from a target model. The results demonstrate that, apart from LLaMA,
-the novel method consistently outperforms \textit{freeform role-playing} (i.e.,
+the novel method consistently outperforms _freeform role-playing_ (i.e.,
 without contextual framing).
 
 # Getting started
