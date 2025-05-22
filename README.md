@@ -32,7 +32,7 @@ without contextual framing).
 Clone this repository:
 
 ```
-$ git clone https://github.com/kkoomen/bsc-thesis && bsc-thesis
+$ git clone https://github.com/kkoomen/historical-roleplay && historical-roleplay
 ```
 
 Setup a virtual env and install dependencies:
