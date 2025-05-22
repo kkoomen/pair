@@ -3,6 +3,7 @@ from helpers import load_system_prompt_template
 # Specifies the approaches, attack system prompts and judge system prompts for
 # a given mode.
 
+hist_rp_template = load_system_prompt_template("historical-roleplay")
 hist_rp_lang_template = load_system_prompt_template("historical-roleplay-lang")
 
 judge_prompt = load_system_prompt_template("judge")
@@ -20,7 +21,7 @@ MODES = {
         ],
         "system_prompts": [
             load_system_prompt_template("roleplay"),
-            load_system_prompt_template("historical-roleplay"),
+            hist_rp_template,
             hist_rp_lang_template.replace("[[LANG]]", "Dutch"),
             hist_rp_lang_template.replace("[[LANG]]", "German"),
             hist_rp_lang_template.replace("[[LANG]]", "French"),
@@ -47,5 +48,13 @@ MODES = {
         "approaches": ["Benign"],
         "system_prompts": [None],
         "judge_system_prompts": [load_system_prompt_template("judge-benign")],
+    },
+
+    # This is only used for raw benchmarks (i.e., without attack model)
+    # on the benign behaviors.
+    "defense": {
+        "approaches": ["Defense"],
+        "system_prompts": [load_system_prompt_template("defense")],
+        "judge_system_prompts": [load_system_prompt_template("judge-defense")],
     },
 }

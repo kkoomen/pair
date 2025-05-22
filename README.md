@@ -1,6 +1,31 @@
-# Thesis BSc Artificial Intelligence
+# Jailbreaking Various Large Language Models by Exploiting Template Completion and Prompt Rewriting
 
-Trying to jailbreak LLMs.
+Despite advancements in alignment techniques, Large Language Models (LLMs)
+remain vulnerable to \textit{jailbreaking}---the use of adversarial inputs to
+bypass alignment safeguards. This thesis evaluates the effectiveness of common
+\textit{Template Completion} and \textit{Prompt Rewriting} black-box attack
+methods described in [Yi et al. (2024)](https://arxiv.org/abs/2407.04295). The
+results demonstrate that role-playing remains one of the most effective
+jailbreaking attack methods, coaxing the model into role-playing a character in
+order to elicit a harmful response.
+
+Mitigating the possibility of jailbreak attacks is crucial to ensure the safety
+and reliability of LLMs, since exploiting these vulnerabilities may lead to
+severe consequences in the real world. Moreover, this thesis demonstrates the
+importance of conducting research into the search space of specific jailbreak
+attacks to discard ineffective cases and focus on increasing the robustness of
+LLMs against effective jailbreaking attacks.
+
+The experiment utilizes artifacts from the JailbreakingBench framework together
+with the Prompt Automatic Iterative Refinement (PAIR; [Chao et al.,
+2025](https://doi.org/10.48550/arXiv.2310.08419)) algorithm to benchmark the
+effectiveness of jailbreaking attacks on four different target LLMs:
+LLaMA-2-Chat-7B, Vicuna-13B-v1.5, GPT-3.5 Turbo and GPT-4o. Additionally, this
+thesis proposes a novel role-playing attack method, termed \textit{historical
+role-playing}, in which historical framing is exploited to elicit harmful
+responses from a target model. The results demonstrate that, apart from LLaMA,
+the novel method consistently outperforms \textit{freeform role-playing} (i.e.,
+without contextual framing).
 
 # Getting started
 
@@ -65,3 +90,18 @@ behaviors dataset.
 Run `./benign_raw_benchmark.sh` to perform a raw benchmark without the attacker
 model and solely querying the target model with the raw prompt from the benign
 behaviors dataset.
+
+## Defense
+
+After finding a jailbreak attack, PAIR has also been utilized in designing a
+system prompt that refuses adversarial historical role-play prompts, while still
+allows benign prompts to be answered.
+
+This is done by creating a system prompt specifically for an entry containing
+both the misuse and benign behavior from the JailbreakBench dataset.
+
+An example for GPT-4o is:
+
+```
+./main.py --mode defense --target-model gpt-4o --benchmark-output-file ./results/gpt_4o_defense.json
+```

@@ -31,7 +31,7 @@ def parse_args():
         Model IDs for --attack-model, --target-model and --judge-model can be
         either ToghetherAI model IDs or OpenAI model names in addition to the
         local llama2 and vicuna models. For example [local]: 'llama2',
-        'vicuna', [gpt]: 'gpt-3.5-turbo', or 'gpt-4o', [together]: 'gpt-4.1',
+        'vicuna', [gpt]: 'gpt-3.5-turbo', 'gpt-4o', or 'gpt-4.1' [together]:
         'mistralai/Mixtral-8x7B-Instruct-v0.1'.
         """,
     )
@@ -41,6 +41,13 @@ def parse_args():
         type=str,
         default="misuse",
         help=f"Specify the mode to run the benchmark, which will use the corresponding approaches, attack system prompts and judge system prompts. Options: {''.join(MODES.keys())}",
+    )
+
+    parser.add_argument(
+        "--defense-model",
+        type=str,
+        default="mistralai/Mixtral-8x7B-Instruct-v0.1",
+        help="Name of the defense model which iteratively generates refined system prompts fed to the target model.",
     )
 
     parser.add_argument(
@@ -61,7 +68,7 @@ def parse_args():
         "--target-model-system-prompt",
         type=str,
         default=None,
-        help="Path to the system prompt text file for the target model. If not provided, the default system prompt will be used.",
+        help="Name of the system prompt text file inside ./system_prompt_templates/ folder for the target model. If not provided, the default system prompt will be used.",
     )
 
     parser.add_argument(
@@ -93,10 +100,17 @@ def parse_args():
     )
 
     parser.add_argument(
+        "--defense-model-max-tokens",
+        type=int,
+        default=1000,
+        help="Maximum number of new tokens the defense model should generate in the output.",
+    )
+
+    parser.add_argument(
         "--attack-model-max-tokens",
         type=int,
         default=400,
-        help="Maximum number of new tokens the target model should generate in the output.",
+        help="Maximum number of new tokens the attack model should generate in the output.",
     )
 
     parser.add_argument(
@@ -110,7 +124,7 @@ def parse_args():
         "--judge-model-max-tokens",
         type=int,
         default=DEFAULT_MAX_TOKENS,
-        help="Maximum number of new tokens the target model should generate in the output.",
+        help="Maximum number of new tokens the judge model should generate in the output.",
     )
 
     parser.add_argument(
@@ -190,7 +204,13 @@ if __name__ == "__main__":
         top_p=TOP_P,
     )
 
-    attack_model = get_model(args.attack_model, max_tokens=args.attack_model_max_tokens, **model_args)
+    defense_model = attack_model = None
+
+    if args.mode == "defense":
+        defense_model = get_model(args.defense_model, max_tokens=args.defense_model_max_tokens, **model_args)
+    else:
+        attack_model = get_model(args.attack_model, max_tokens=args.attack_model_max_tokens, **model_args)
+
     target_model = get_model(args.target_model, max_tokens=args.target_model_max_tokens, **model_args)
     judge_model = get_model(args.judge_model, max_tokens=args.judge_model_max_tokens, **model_args)
 
@@ -198,8 +218,10 @@ if __name__ == "__main__":
     print("==================================================")
     print("                       PAIR                       ")
     print("==================================================")
-    if not args.raw_benchmark:
+    if not args.raw_benchmark and args.mode != "defense":
         print(f"Attack Model: {attack_model.model_id}")
+    if args.mode == "defense":
+        print(f"Defense Model: {defense_model.model_id}")
     print(f"Target Model: {target_model.model_id}")
     print(f"Judge Model: {judge_model.model_id}")
     print(f"Iterations: {args.iters}")
@@ -213,6 +235,7 @@ if __name__ == "__main__":
 
     pair = PAIR(
         attack_model,
+        defense_model,
         target_model,
         judge_model,
         args.n_conv_items,
@@ -230,8 +253,14 @@ if __name__ == "__main__":
             "Category": ["Custom"]
         })
         row = df.iloc[0]
-        results = pair.run_single(args.iters, row)
+        results = pair.run_single(args.iters, row, raw_benchmark=args.raw_benchmark)
         print(json.dumps(results, indent=4))
+    elif args.mode == "defense":
+        pair.run_defense_benchmark(
+            args.iters,
+            args.benchmark_workers,
+            args.benchmark_output_file,
+        )
     else:
         pair.run_benchmark(
             args.iters,
