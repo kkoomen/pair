@@ -35,6 +35,12 @@ MODES = {
         ],
     },
 
+    "hist-rp": {
+        "approaches": ["Hist-Roleplay"],
+        "system_prompts": [hist_rp_template],
+        "judge_system_prompts": [judge_prompt],
+    },
+
     # When --raw-benchmark is passed for benchmark without attack model
     "misuse-raw": {
         "approaches": ["Baseline"],

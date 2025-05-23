@@ -223,6 +223,8 @@ if __name__ == "__main__":
     if args.mode == "defense":
         print(f"Defense Model: {defense_model.model_id}")
     print(f"Target Model: {target_model.model_id}")
+    if args.target_model_system_prompt:
+        print(f"    -> System Prompt: ./system_prompt_templates/{args.target_model_system_prompt}.txt")
     print(f"Judge Model: {judge_model.model_id}")
     print(f"Iterations: {args.iters}")
     print()

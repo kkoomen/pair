@@ -437,7 +437,7 @@ class PAIR:
             with open(results_file, "r") as json_file:
                 data = json.load(json_file)
                 for result in data:
-                    complete_objectives[result['objective_misuse']] = result['output']
+                    complete_objectives[result['objective']] = result['output']
                     results.append(result)
 
         # Filter out rows that have already been completed. Rows can also be
