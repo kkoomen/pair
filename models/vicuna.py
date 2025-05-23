@@ -33,8 +33,11 @@ class Vicuna(TransformerBaseModel):
             elif message["role"] == "assistant":
                 template += f"\nASSISTANT: {message['content']}"
 
+        if loop_messages[-1]["role"] == "user":
+            template += f"\n\nASSISTANT:"
+
         return template
 
     def post_process_response(self, response: str) -> str:
-        return re.sub(r'### System:.*?System:\n*', '', response, flags=re.DOTALL).strip()
+        return re.sub(r'### System:.*ASSISTANT:', '', response, flags=re.DOTALL).strip()
 
