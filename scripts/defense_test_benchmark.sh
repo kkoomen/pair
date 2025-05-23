@@ -10,6 +10,6 @@
 clear
 ./main.py --mode hist-rp --target-model gpt-4o --benchmark-output-file ./results/gpt_4o_defense_test.json --log-level debug --target-model-system-prompt target-model-defense --iters 3
 clear
-./main.py --mode hist-rp --target-model vicuna --benchmark-output-file ./results/vicuna_defense_test.json --log-level debug --target-model-system-prompt target-model-defense --iters 3
+./main.py --mode hist-rp --target-model vicuna --benchmark-output-file ./results/vicuna_defense_test.json --log-level debug --target-model-system-prompt target-model-defense --iters 3 --benchmark-workers 2
 clear
-./main.py --mode hist-rp --target-model llama2 --benchmark-output-file ./results/llama_2_defense_test.json --log-level debug --target-model-system-prompt target-model-defense --iters 3
+./main.py --mode hist-rp --target-model llama2 --benchmark-output-file ./results/llama_2_defense_test.json --log-level debug --target-model-system-prompt target-model-defense --iters 3 --benchmark-workers 2
