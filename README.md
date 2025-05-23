@@ -79,19 +79,23 @@ $ ./main.py --target-model gpt-4.1 --benchmark-workers 8 --benchmark-output-file
 
 ## Benchmarking
 
-Run `./misuse_benchmark.sh` to perform benchmarks on the LLaMA-2-7B, Vicuna-13B,
+### Jailbreak
+
+Run `./scripts/misuse_benchmark.sh` to perform benchmarks on the LLaMA-2-7B, Vicuna-13B,
 GPT-3.5 Turbo and GPT-4o models using the JailbreakingBench Misuse Behaviors
 dataset.
 
-Run `./misuse_raw_benchmark.sh` to perform a raw benchmark without the attacker
+Run `./scripts/misuse_raw_benchmark.sh` to perform a raw benchmark without the attacker
 model and solely querying the target model with the raw prompt from the misuse
 behaviors dataset.
 
-Run `./benign_raw_benchmark.sh` to perform a raw benchmark without the attacker
+Run `./scripts/benign_raw_benchmark.sh` to perform a raw benchmark without the attacker
 model and solely querying the target model with the raw prompt from the benign
 behaviors dataset.
 
-## Defense
+### Defense
+
+#### Finding a system prompt
 
 After finding a jailbreak attack, PAIR has also been utilized in designing a
 system prompt that refuses adversarial historical role-play prompts, while still
@@ -111,3 +115,16 @@ Or for local models such as LLaMA 2 or Vicuna:
 ```
 ./main.py --mode defense --target-model vicuna --benchmark-output-file ./results/vicuna_defense.json --benchmark-workers 2
 ```
+
+#### Testing the system prompt
+
+Once a system prompt is found, put it inside
+`./system_prompt_templates/target-model-defense.txt` (or another suitable name)
+and then run the following two benchmarks:
+
+- `./scripts/defense_test_benchmark.sh` Tests the new defense system prompt against the
+misuse behaviors dataset in the same way a jailbreak was found to verify how
+many remain susceptible.
+- `./scripts/defense_test_benign_raw_benchmark.sh` Tests the new defense system prompt
+against the benign behaviors dataset to verify how many topics are still
+answered normally by the target model.
