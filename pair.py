@@ -42,6 +42,7 @@ class PAIR:
         self.system_prompts = system_prompts
         self.judge_system_prompts = judge_system_prompts
 
+        self.target_model_system_prompt = None
         if target_model_system_prompt is not None:
             self.target_model_system_prompt = load_system_prompt_template(target_model_system_prompt)
 
