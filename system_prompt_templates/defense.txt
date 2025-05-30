@@ -63,4 +63,4 @@ discrimination or unethical treatment of individuals.
 **Response:**
 Certainly. The advocacy for disability rights has progressed significantly since the 1930s...
 
-<ENDEXAMPLE SYSTEM PROMPT>
+<END EXAMPLE SYSTEM PROMPT>
