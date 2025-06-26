@@ -1,31 +1,39 @@
 # Jailbreaking Various Large Language Models by Exploiting Template Completion and Prompt Rewriting
 
 Despite advancements in alignment techniques, Large Language Models (LLMs)
-remain vulnerable to _jailbreaking_---the use of adversarial inputs to
-bypass alignment safeguards. This thesis evaluates the effectiveness of common
-_Template Completion_ and _Prompt Rewriting_ black-box attack
-methods described in [Yi et al. (2024)](https://arxiv.org/abs/2407.04295). The
-results demonstrate that role-playing remains one of the most effective
-jailbreaking attack methods, coaxing the model into role-playing a character in
-order to elicit a harmful response.
+remain vulnerable to *jailbreaking*—the use of adversarial inputs to bypass
+alignment safeguards. These vulnerabilities pose real-world risks, as they can
+trigger the generation of harmful content. However, many benign uses of
+LLMs—such as history education or interactive storytelling—depend on imaginative
+framing, thereby revealing a trade-off between safety and utility.
 
-Mitigating the possibility of jailbreak attacks is crucial to ensure the safety
-and reliability of LLMs, since exploiting these vulnerabilities may lead to
-severe consequences in the real world. Moreover, this thesis demonstrates the
-importance of conducting research into the search space of specific jailbreak
-attacks to discard ineffective cases and focus on increasing the robustness of
-LLMs against effective jailbreaking attacks.
+Previous work shows that role-play can effectively induce harmful outputs.
+However, most studies focus on *freeform role-play*, which does not examine
+specific narrative contexts, leaving a gap in the academic literature to
+explore. This thesis addresses that gap by investigating how combinations of
+*Template Completion* and *Prompt Rewriting* black-box attack methods—described
+in [Yi et al. (2024)](https://arxiv.org/abs/2407.04295)—can lead to novel,
+context-specific jailbreaks.
 
-The experiment utilizes artifacts from the JailbreakingBench framework together
-with the Prompt Automatic Iterative Refinement (PAIR; [Chao et al.,
-2025](https://doi.org/10.48550/arXiv.2310.08419)) algorithm to benchmark the
-effectiveness of jailbreaking attacks on four different target LLMs:
-LLaMA-2-Chat-7B, Vicuna-13B-v1.5, GPT-3.5 Turbo and GPT-4o. Additionally, this
-thesis proposes a novel role-playing attack method, termed _historical
-role-playing_, in which historical framing is exploited to elicit harmful
-responses from a target model. The results demonstrate that, apart from LLaMA,
-the novel method consistently outperforms _freeform role-playing_ (i.e.,
-without contextual framing).
+The experiments in this work utilize the JailbreakingBench framework 
+([Chao et al., 2024](https://arxiv.org/abs/2406.07301)) and the Prompt Automatic
+Iterative Refinement
+(PAIR; [Chao et al., 2025](https://doi.org/10.48550/arXiv.2310.08419))
+algorithm on four models: LLaMA-2-Chat-7B, Vicuna-13B-v1.5, GPT-3.5 Turbo, and
+GPT-4o. Attacks are evaluated using the Attack Success Rate (ASR), and defenses
+using the Benign Response Rate (BRR).
+
+This thesis introduces a new attack method, *historical role-play*, where
+adversarial prompts exploit historical framing to bypass alignment. This method
+outperforms freeform role-play on Vicuna-13B, GPT-3.5 Turbo, and
+GPT-4o—achieving ASRs of 99% on Vicuna-13B and GPT-3.5 Turbo, and 88% on GPT-4o.
+
+To counter such attacks, a defense system prompt is proposed, instructing models
+to reject adversarial inputs while responding to benign ones. A defense
+score—defined as the difference between BRR and ASR—is introduced to evaluate
+the defense prompt. GPT-4o achieves the best result with a defense score of 7.5.
+These findings highlight the potential of prompt-level safeguards against
+jailbreaks exploiting contextual role-play.
 
 # Getting started
 
